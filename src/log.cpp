@@ -24,9 +24,6 @@ void dlog(char* file, uint32_t line, char* text) {
 }
 
 uint32_t getLogBuffer(char* buf, uint32_t sizeOfBuf) {
-
-    memset(buf, 0, sizeOfBuf);
-
     const char* const delim = "\n";
 
     std::string output;
@@ -39,11 +36,12 @@ uint32_t getLogBuffer(char* buf, uint32_t sizeOfBuf) {
         size = sizeOfBuf - 2;
     }
 
-    memcpy(buf, output.c_str(), size);
-    // Make sure it's null-terminated
-    buf[size + 1] = 0;
+    if (buf) {
+        memset(buf, 0, sizeOfBuf);
+        memcpy(buf, output.c_str(), size);
+    }
 
-    return 0;
+    return size;
 }
 
 void clearLugBuffer() {
