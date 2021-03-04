@@ -14,6 +14,7 @@ add_executable(rp2040-dongle
         hidinterface.c
         acminterface.c
         usb_descriptors.c
+        log.cpp
         stdio_usb.c
         )
 

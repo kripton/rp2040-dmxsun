@@ -34,6 +34,8 @@
 
 #include "stdio_usb.h"
 
+#include "log.h"
+
 #include "dmahandler.h"
 
 #include "acminterface.h"

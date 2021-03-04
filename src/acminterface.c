@@ -6,6 +6,13 @@ void debugPrintUniverse(uint8_t universe) {
     uint16_t offset;
     uint16_t chan;
 
+    LOG("Hello world!");
+
+    char test[1024];
+    getLogBuffer(test, 1024);
+    printf("From log buf: %s", test);
+    clearLugBuffer();
+
     printf("%02d  01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20\n", universe);
 
     for (offset = 0; offset < 510; offset += 20) {
