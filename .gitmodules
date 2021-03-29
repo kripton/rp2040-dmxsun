@@ -1,0 +1,3 @@
+[submodule "src/RF24"]
+	path = src/RF24
+	url = git@github.com:kripton/RF24.git
