@@ -17,6 +17,7 @@ add_executable(rp2040-dongle
         stdio_usb.c
 	RF24/RF24.cpp
 	RF24/utility/RPi-Pico/spi.cpp
+        wireless.cpp
         )
 
 pico_generate_pio_header(rp2040-dongle ${CMAKE_CURRENT_LIST_DIR}/tx16.pio)
