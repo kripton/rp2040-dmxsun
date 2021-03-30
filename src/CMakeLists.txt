@@ -15,11 +15,15 @@ add_executable(rp2040-dongle
         acminterface.c
         usb_descriptors.c
         stdio_usb.c
+	RF24/RF24.cpp
+	RF24/utility/RPi-Pico/spi.cpp
         )
 
 pico_generate_pio_header(rp2040-dongle ${CMAKE_CURRENT_LIST_DIR}/tx16.pio)
 
-target_include_directories(rp2040-dongle PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(rp2040-dongle PRIVATE
+	${CMAKE_CURRENT_LIST_DIR}
+	)
 
 target_link_libraries(rp2040-dongle
         pico_stdlib
