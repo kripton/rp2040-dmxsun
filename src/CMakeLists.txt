@@ -16,8 +16,9 @@ add_executable(rp2040-dongle
         usb_descriptors.c
         log.cpp
         stdio_usb.c
-	RF24/RF24.cpp
-	RF24/utility/RPi-Pico/spi.cpp
+        RF24/RF24.cpp
+        RF24/utility/RPi-Pico/gpio.cpp
+        RF24/utility/RPi-Pico/spi.cpp
         wireless.cpp
         )
 
@@ -36,6 +37,7 @@ target_link_libraries(rp2040-dongle
         hardware_dma
         hardware_irq
         hardware_pio
+        hardware_timer
         )
 
 # create map/bin/hex/uf2 file etc.

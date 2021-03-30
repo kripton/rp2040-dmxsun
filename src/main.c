@@ -40,6 +40,8 @@
 
 #include "acminterface.h"
 
+#include "wireless.h"
+
 #include "bsp/board.h"          // LED timing
 #include <tusb.h>
 
@@ -108,6 +110,14 @@ int main() {
 
     // Manually call the handler once, to trigger the first transfer
     dma_handler();
+
+    while (!tud_cdc_connected()) {
+        // Wait here until CDC connected
+    }
+
+    LOG("Calling wirelessInit() ..."); printLogBuffer(); clearLogBuffer();
+    wirelessInit();
+    LOG("Done!"); printLogBuffer(); clearLogBuffer();
 
     // Everything else from this point is interrupt-driven. The processor has
     // time to sit and think about its early retirement -- maybe open a bakery?
