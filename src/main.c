@@ -159,6 +159,15 @@ void led_blinking_task(void) {
     if (board_millis() - start_ms_debug < debug_refresh_interval_ms) return; // not enough time
     start_ms_debug += debug_refresh_interval_ms;
 
-    debugPrintUniverse(0);
-    debugPrintUniverse(1);
+    // Debugging stuff
+    LOGuni(0, dmx_values[0]);
+    LOGuni(1, dmx_values[1]);
+
+    /* Logging demo:
+    LOG("Hello world!");
+    LOGfmt("%d * %02x = %d", 3, 5 , 3*5);
+    */
+
+    printLogBuffer();
+    clearLogBuffer();
 }
