@@ -17,8 +17,8 @@ add_executable(rp2040-dongle
         log.cpp
         stdio_usb.c
         RF24/RF24.cpp
-        RF24/utility/RPi-Pico/gpio.cpp
-        RF24/utility/RPi-Pico/spi.cpp
+        RF24/utility/rp2/gpio.cpp
+        RF24/utility/rp2/spi.cpp
         wireless.cpp
         )
 

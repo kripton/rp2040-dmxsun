@@ -1,12 +1,6 @@
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iterator>
-
-#include <string.h>
-
 extern "C" {
 #include "log.h"
+#include "wireless.h"
 }
 
 #include "RF24/RF24.h"
