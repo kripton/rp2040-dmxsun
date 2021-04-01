@@ -38,6 +38,8 @@ target_link_libraries(rp2040-dongle
         hardware_irq
         hardware_pio
         hardware_timer
+        hardware_gpio
+        hardware_spi
         )
 
 # create map/bin/hex/uf2 file etc.

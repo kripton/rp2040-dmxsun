@@ -169,6 +169,8 @@ void led_blinking_task(void) {
     if (board_millis() - start_ms_debug < debug_refresh_interval_ms) return; // not enough time
     start_ms_debug += debug_refresh_interval_ms;
 
+    wirelessSend();
+
     // Debugging stuff
     LOGuni(0, dmx_values[0]);
     LOGuni(1, dmx_values[1]);
