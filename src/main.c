@@ -50,10 +50,18 @@
  * - 1000 ms : Sending DMX, universe 0 has one value != 0
  * - 2500 ms : Sending DMX, all universes are zero
  */
+/*
 enum {
     BLINK_SENDING_ZERO         = 1000,
     BLINK_SENDING_CONTENT_ONE  =  500,
     BLINK_SENDING_CONTENT_MORE =  100,
+};*/
+
+// 10 shoter blinking and sending data intervals for development
+enum {
+    BLINK_SENDING_ZERO         =  100,
+    BLINK_SENDING_CONTENT_ONE  =   50,
+    BLINK_SENDING_CONTENT_MORE =   10,
 };
 
 static uint32_t blink_interval_ms = BLINK_SENDING_ZERO;
@@ -110,10 +118,6 @@ int main() {
 
     // Manually call the handler once, to trigger the first transfer
     dma_handler();
-
-    while (!tud_cdc_connected()) {
-        // Wait here until CDC connected
-    }
 
     LOG("Calling wirelessInit() ..."); printLogBuffer(); clearLogBuffer();
     wirelessInit();
