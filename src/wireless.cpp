@@ -11,7 +11,7 @@ extern uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
 RF24 radio(28, 5, 250000); // using pin 28 for the CE pin, and pin 5 for the CSN pin
 
 void wirelessInit() {
-    uint8_t address[][6] = {"1DMX", "2DMX"};
+    uint8_t address[][6] = {"1Node", "2Node"};
 
     // initialize the transceiver on the SPI bus
     SPI spi;
@@ -33,15 +33,15 @@ void wirelessInit() {
     radio.setChannel(120);
     radio.setDataRate(RF24_1MBPS);
 
-    radio.setPayloadSize(4);
+    radio.setPayloadSize(16);
 
     // set the TX address of the RX node into the TX pipe
-    radio.openWritingPipe(address[1]);     // always uses pipe 0
+    radio.openWritingPipe(address[0]);     // always uses pipe 0
 
     // set the RX address of the TX node into a RX pipe
-    radio.openReadingPipe(1, address[0]); // using pipe 1
+    radio.openReadingPipe(1, address[1]); // using pipe 1
 
-    radio.startListening();  // put radio in RX mode
+    radio.stopListening();  // put radio in RX mode
 }
 
 void wirelessSend() {
@@ -63,7 +63,8 @@ void wirelessSend() {
         );
     }
     radio.stopListening(); // TX mode
-    radio.write(dmx_values[0], 4);
+    bool result = radio.write(dmx_values[0] + 43, 16);
+    printf("WRITE RESULT: %d", result);
     radio.startListening();  // RX mode again
 }
 
