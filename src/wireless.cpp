@@ -4,11 +4,15 @@ extern "C" {
 }
 
 #include "RF24/RF24.h"
+#include "RF24Network/RF24Network.h"
+#include "RF24Mesh/RF24Mesh.h"
 
 extern "C" {
 
 extern uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
-RF24 radio(28, 5, 250000); // using pin 28 for the CE pin, and pin 5 for the CSN pin
+RF24 radio(28, 5); // using pin 28 for the CE pin, and pin 5 for the CSN pin
+RF24Network network(radio);
+RF24Mesh mesh(radio, network);
 
 void wirelessInit() {
     uint8_t address[][6] = {"1Node", "2Node"};
@@ -33,7 +37,7 @@ void wirelessInit() {
     radio.setChannel(120);
     radio.setDataRate(RF24_1MBPS);
 
-    radio.setPayloadSize(16);
+    radio.setPayloadSize(24);
 
     // set the TX address of the RX node into the TX pipe
     radio.openWritingPipe(address[0]);     // always uses pipe 0
@@ -63,7 +67,7 @@ void wirelessSend() {
         );
     }
     radio.stopListening(); // TX mode
-    bool result = radio.write(dmx_values[0] + 43, 16);
+    bool result = radio.write(dmx_values[0] + 43, 24);
     printf("WRITE RESULT: %d", result);
     radio.startListening();  // RX mode again
 }

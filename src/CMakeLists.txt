@@ -19,6 +19,8 @@ add_executable(rp2040-dongle
         RF24/RF24.cpp
         RF24/utility/rp2/gpio.cpp
         RF24/utility/rp2/spi.cpp
+        RF24Network/RF24Network.cpp
+        RF24Mesh/RF24Mesh.cpp
         wireless.cpp
         )
 
@@ -26,6 +28,8 @@ pico_generate_pio_header(rp2040-dongle ${CMAKE_CURRENT_LIST_DIR}/tx16.pio)
 
 target_include_directories(rp2040-dongle PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}
+	${CMAKE_CURRENT_LIST_DIR}/RF24
+	${CMAKE_CURRENT_LIST_DIR}/RF24Network
 	)
 
 target_link_libraries(rp2040-dongle
