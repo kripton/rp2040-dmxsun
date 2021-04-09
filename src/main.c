@@ -66,7 +66,7 @@ enum {
 
 static uint32_t blink_interval_ms = BLINK_SENDING_ZERO;
 
-static uint32_t debug_refresh_interval_ms = 1000;
+static uint32_t debug_refresh_interval_ms = 100;
 
 int dma_chan;                          // The DMA channel we use to push data around
 uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
