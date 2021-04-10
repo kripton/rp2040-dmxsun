@@ -8,6 +8,8 @@ project(rp2040-dongle)
 
 pico_sdk_init()
 
+include(RF24/CMakeLists.txt)
+
 add_executable(rp2040-dongle
         dmahandler.c
         main.c
@@ -16,9 +18,6 @@ add_executable(rp2040-dongle
         usb_descriptors.c
         log.cpp
         stdio_usb.c
-        RF24/RF24.cpp
-        RF24/utility/rp2/gpio.cpp
-        RF24/utility/rp2/spi.cpp
         RF24Network/RF24Network.cpp
         RF24Mesh/RF24Mesh.cpp
         wireless.cpp
@@ -28,8 +27,6 @@ pico_generate_pio_header(rp2040-dongle ${CMAKE_CURRENT_LIST_DIR}/tx16.pio)
 
 target_include_directories(rp2040-dongle PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}
-	${CMAKE_CURRENT_LIST_DIR}/RF24
-	${CMAKE_CURRENT_LIST_DIR}/RF24Network
 	)
 
 target_link_libraries(rp2040-dongle
@@ -44,6 +41,7 @@ target_link_libraries(rp2040-dongle
         hardware_timer
         hardware_gpio
         hardware_spi
+	RF24
         )
 
 # create map/bin/hex/uf2 file etc.
