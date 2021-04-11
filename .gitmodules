@@ -7,3 +7,6 @@
 [submodule "src/RF24Mesh"]
 	path = lib/RF24Mesh
 	url = https://github.com/nrf24/RF24Mesh
+[submodule "lib/heatshrink"]
+	path = lib/heatshrink
+	url = https://github.com/atomicobject/heatshrink.git
