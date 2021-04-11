@@ -8,7 +8,7 @@ project(rp2040-dongle)
 
 pico_sdk_init()
 
-include(RF24/CMakeLists.txt)
+include(../lib/RF24/CMakeLists.txt)
 
 add_executable(rp2040-dongle
         dmahandler.c

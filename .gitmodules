@@ -2,8 +2,8 @@
 	path = lib/RF24
 	url = git@github.com:kripton/RF24.git
 [submodule "src/RF24Network"]
-	path = src/RF24Network
+	path = lib/RF24Network
 	url = https://github.com/nrf24/RF24Network
 [submodule "src/RF24Mesh"]
-	path = src/RF24Mesh
+	path = lib/RF24Mesh
 	url = https://github.com/nrf24/RF24Mesh
