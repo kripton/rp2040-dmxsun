@@ -25,6 +25,23 @@ add_executable(rp2040-dongle
 
 pico_generate_pio_header(rp2040-dongle ${CMAKE_CURRENT_LIST_DIR}/tx16.pio)
 
+target_compile_definitions(rp2040-dongle PUBLIC PICO_DEFAULT_SPI_SCK_PIN=2)
+target_compile_definitions(rp2040-dongle PUBLIC PICO_DEFAULT_SPI_TX_PIN=3)
+target_compile_definitions(rp2040-dongle PUBLIC PICO_DEFAULT_SPI_RX_PIN=4)
+
+## Config for RF24Network
+# Pretend header file is already included so it doesn't re-define our values here
+# Thus, make sure you define ALL values here and not in RF24Network_config.h
+target_compile_definitions(rp2040-dongle PUBLIC __RF24NETWORK_CONFIG_H__)
+target_compile_definitions(rp2040-dongle PUBLIC NETWORK_DEFAULT_ADDRESS=04444)
+target_compile_definitions(rp2040-dongle PUBLIC RF24NetworkMulticast)
+target_compile_definitions(rp2040-dongle PUBLIC MAX_PAYLOAD_SIZE=514)
+target_compile_definitions(rp2040-dongle PUBLIC MAIN_BUFFER_SIZE=524)
+target_compile_definitions(rp2040-dongle PUBLIC ENABLE_NETWORK_STATS)
+target_compile_definitions(rp2040-dongle PUBLIC ENABLE_DYNAMIC_PAYLOADS)
+
+
+
 target_include_directories(rp2040-dongle PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}
 	)

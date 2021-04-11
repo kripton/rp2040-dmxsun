@@ -19,7 +19,7 @@ void wirelessInit() {
 
     // initialize the transceiver on the SPI bus
     SPI spi;
-    spi.begin(spi0, 2, 3, 4);
+    spi.begin(spi0);
     bool result = radio.begin(&spi);
     while (!result) {
         printf("Radio hardware is not responding!\n");
