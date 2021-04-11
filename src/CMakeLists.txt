@@ -1,17 +1,21 @@
 cmake_minimum_required(VERSION 3.13)
 
-# pico_sdk_import.cmake is copied from
-# https://github.com/raspberrypi/pico-sdk/blob/master/external/pico_sdk_import.cmake
+## pico_sdk_import.cmake is copied from
+## https://github.com/raspberrypi/pico-sdk/blob/master/external/pico_sdk_import.cmake
 include(pico_sdk_import.cmake)
 
+## Give the baby a name. Will also be the name of the resulting binaries
 project(rp2040-dongle)
 
+## Init the pico-sdk. Will instruct the user what to do if deps are missing
 pico_sdk_init()
 
+## Include the CMakeLists-files of (non-pico-sdk)-libraries we will be using
 include(../lib/RF24/CMakeLists.txt)
 include(../lib/RF24Network/CMakeLists.txt)
 include(../lib/RF24Mesh/CMakeLists.txt)
 
+## Add our own C/C++ files here
 add_executable(${CMAKE_PROJECT_NAME}
     dmahandler.c
     main.c
@@ -23,6 +27,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     wireless.cpp
 )
 
+## Add our rp2040-PIO programs here
 pico_generate_pio_header(${CMAKE_PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/tx16.pio
 )
@@ -57,9 +62,10 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC MESH_DEFAULT_ADDRESS=044
 
 ## Needed so tusb_config.h is found by the tinyUSB-library included in the pico-sdk
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-	${CMAKE_CURRENT_LIST_DIR}
-	)
+    ${CMAKE_CURRENT_LIST_DIR}
+)
 
+## Pull in all pico-sdk + non-pico-sdk libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_stdlib
     pico_unique_id
@@ -75,7 +81,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     RF24
     RF24Network
     RF24Mesh
-    )
+)
 
-# create map/bin/hex/uf2 file etc.
+## Create map/bin/hex/uf2 file etc.
 pico_add_extra_outputs(${CMAKE_PROJECT_NAME})
