@@ -40,19 +40,27 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
     PUBLIC PICO_DEFAULT_SPI_RX_PIN=4
 )
 
-## Config for RF24Network
+## Config for the RF24Network library
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PUBLIC MAX_PAYLOAD_SIZE=514
     ENABLE_NETWORK_STATS
 )
 
-## Config for RF24Mesh
+## Config for the RF24Mesh library
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PUBLIC MESH_DEFAULT_CHANNEL=120
     PUBLIC MESH_RENEWAL_TIMEOUT=2000
     PUBLIC MESH_MEM_ALLOC_SIZE=16
     PUBLIC MESH_LOOKUP_TIMEOUT=250
     PUBLIC MESH_WRITE_TIMEOUT=100
+)
+
+## Config for the heatshrink library
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PUBLIC HEATSHRINK_DYNAMIC_ALLOC=0
+    PUBLIC HEATSHRINK_STATIC_INPUT_BUFFER_SIZE=600
+    PUBLIC HEATSHRINK_STATIC_WINDOW_BITS=9
+    PUBLIC HEATSHRINK_STATIC_LOOKAHEAD_BITS=6
 )
 
 ## Needed so tusb_config.h is found by the tinyUSB-library included in the pico-sdk
