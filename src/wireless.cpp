@@ -7,6 +7,9 @@ extern "C" {
 #include <RF24Network.h>
 #include <RF24Mesh.h>
 
+#include <heatshrink_encoder.h>
+#include <heatshrink_decoder.h>
+
 extern "C" {
 
 extern uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
