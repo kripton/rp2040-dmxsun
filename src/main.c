@@ -26,6 +26,7 @@
 #include "hardware/clocks.h"    // To derive our 250000bit/s from sys_clk
 #include "hardware/dma.h"       // To control the data transfer from mem to pio
 #include "hardware/gpio.h"      // To "manually" control the trigger pin
+#include "hardware/i2c.h"       // Detect, read and write the EEPROMs on the IO-boards
 #include "hardware/irq.h"       // To control the data transfer from mem to pio
 #include "tx16.pio.h"           // Header file for the PIO program
 
@@ -63,6 +64,7 @@ static uint32_t debug_refresh_interval_ms = 100;
 
 int dma_chan;                          // The DMA channel we use to push data around
 uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
+uint8_t ioboards[8][256];              // Content of the IO-board EEPROMS
 
 void led_blinking_task(void);
 
@@ -73,6 +75,45 @@ int main() {
     tusb_init();
 
     stdio_usb_init();
+
+    while (!tud_cdc_connected()) {
+        // Wait here until CDC connected
+    }
+
+    // Scan for io boards
+    i2c_init(i2c0, 100 * 1000);
+    gpio_set_function(0, GPIO_FUNC_I2C);
+    gpio_set_function(1, GPIO_FUNC_I2C);
+    // Pull-ups are populated on Rev 0.1 base boards ....
+    gpio_pull_up(0);
+    gpio_pull_up(1);
+    memset(ioboards, 0x00, 8*256);
+    printf("\nI2C Bus Scan\n");
+    printf("   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
+    for (int addr = 80; addr < 88; ++addr) {
+        if (addr % 16 == 0) {
+            printf("%02x ", addr);
+        }
+
+        int ret;
+        uint8_t src = 0;
+        // Set EEPROM address to read from
+        i2c_write_blocking(i2c0, addr, &src, 1, false);
+        // Try to read the EEPROM data
+        ret = i2c_read_blocking(i2c0, addr, ioboards[addr - 0x50], 256, false);
+        printf(ret < 0 ? "." : "@");
+        printf(addr % 16 == 15 ? "\n" : "  ");
+    }
+    printf("Done.\n");
+
+    // Output the content of the EEPROMS
+    for (uint8_t board = 0; board < 8; board++) {
+        printf("IOBOARD %d: ", board);
+        for (uint16_t byte = 0; byte < 256; byte++) {
+            printf("%02x", ioboards[board][byte]);
+        }
+        printf("\n");
+    }
 
     // Set up our TRIGGER GPIO on GP28 and init it to LOW
     gpio_init(PIN_TRIGGER);

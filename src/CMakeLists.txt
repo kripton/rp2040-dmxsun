@@ -76,6 +76,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     tinyusb_device
     tinyusb_board
     hardware_dma
+    hardware_i2c
     hardware_irq
     hardware_pio
     hardware_timer
