@@ -29,6 +29,7 @@
 #include "hardware/i2c.h"       // Detect, read and write the EEPROMs on the IO-boards
 #include "hardware/irq.h"       // To control the data transfer from mem to pio
 #include "tx16.pio.h"           // Header file for the PIO program
+#include "ws2812.pio.h"           // Header file for the PIO program
 
 #include "pico/stdlib.h"
 #include "stdio.h"
@@ -62,11 +63,23 @@ static uint32_t blink_interval_ms = BLINK_SENDING_ZERO;
 
 static uint32_t debug_refresh_interval_ms = 100;
 
+const int PIN_LEDs = 22;
+
 int dma_chan;                          // The DMA channel we use to push data around
 uint8_t dmx_values[16][512];           // 16 universes with 512 byte each
 uint8_t ioboards[8][256];              // Content of the IO-board EEPROMS
 
 void led_blinking_task(void);
+
+static inline void put_pixel(uint32_t pixel_grb) {
+    pio_sm_put_blocking(pio1, 3, pixel_grb << 8u);
+}
+static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
+    return
+            ((uint32_t) (r) << 8) |
+            ((uint32_t) (g) << 16) |
+            (uint32_t) (b);
+}
 
 int main() {
     gpio_init(25);
@@ -75,6 +88,17 @@ int main() {
     tusb_init();
 
     stdio_usb_init();
+
+    // Create the state machine for the status LEDS
+    int sm = 3;
+    uint offsetsled = pio_add_program(pio1, &ws2812_program);
+    ws2812_program_init(pio1, sm, offsetsled, PIN_LEDs, 800000, false);
+
+    put_pixel(0x10101);
+
+    put_pixel(0x10101);
+
+    put_pixel(0x10101);
 
     while (!tud_cdc_connected()) {
         // Wait here until CDC connected

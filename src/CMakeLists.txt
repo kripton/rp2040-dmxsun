@@ -33,6 +33,10 @@ pico_generate_pio_header(${CMAKE_PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/tx16.pio
 )
 
+pico_generate_pio_header(${CMAKE_PROJECT_NAME}
+    ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio
+)
+
 ## Define the SPI pins we use for the RF24 library
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PUBLIC PICO_DEFAULT_SPI_SCK_PIN=2
