@@ -95,9 +95,7 @@ int main() {
     ws2812_program_init(pio1, sm, offsetsled, PIN_LEDs, 800000, false);
 
     put_pixel(0x10101);
-
     put_pixel(0x10101);
-
     put_pixel(0x10101);
 
     while (!tud_cdc_connected()) {
