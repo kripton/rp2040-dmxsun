@@ -16,3 +16,6 @@
 [submodule "lib/snappy"]
 	path = lib/snappy
 	url = https://github.com/kripton/snappy.git
+[submodule "lib/picojson"]
+	path = lib/picojson
+	url = https://github.com/kripton/picojson.git

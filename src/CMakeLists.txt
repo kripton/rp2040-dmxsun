@@ -89,6 +89,12 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
     PUBLIC MESH_WRITE_TIMEOUT=100
 )
 
+## Config for the picojson library
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PUBLIC PICOJSON_USE_LOCALE=0
+    PUBLIC PICOJSON_DISABLE_EXCEPTION=1
+)
+
 ## LWIP works a little bit different than the other libraries since
 ## it ships its onw FileList
 set(LWIP_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib/lwip)
@@ -102,6 +108,7 @@ include(${LWIP_DIR}/src/Filelists.cmake)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${LWIP_INCLUDE_DIRS}
     ${PICO_TINYUSB_PATH}/lib/networking
+    ${CMAKE_CURRENT_LIST_DIR}/../lib/picojson/
     ${CMAKE_CURRENT_LIST_DIR}
 )
 
