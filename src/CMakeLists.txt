@@ -87,7 +87,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 
 ## Config for the RF24Network library
 target_compile_definitions(${CMAKE_PROJECT_NAME}
-    PUBLIC MAX_PAYLOAD_SIZE=514
+    PUBLIC MAX_PAYLOAD_SIZE=530
     ENABLE_NETWORK_STATS
 )
 

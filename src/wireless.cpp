@@ -71,14 +71,14 @@ void Wireless::init() {
     }
     statusLeds.writeLeds();
 
+    rf24radio.setPALevel(boardConfig.activeConfig->radioParams.txPower, true);
+    rf24radio.setChannel(boardConfig.activeConfig->radioChannel);
+    rf24radio.setDataRate(boardConfig.activeConfig->radioParams.dataRate);
+    rf24radio.setCRCLength(RF24_CRC_16);
     // Depending on radioRole, more setup is required
     if (boardConfig.activeConfig->radioRole == RadioRole::broadcast) {
-        rf24radio.setPALevel(boardConfig.activeConfig->radioParams.txPower, true);
-        rf24radio.setChannel(boardConfig.activeConfig->radioChannel);
-        rf24radio.setDataRate(boardConfig.activeConfig->radioParams.dataRate);
         rf24radio.enableDynamicPayloads();
         rf24radio.setAutoAck(true);
-        rf24radio.setCRCLength(RF24_CRC_16);
         rf24radio.disableAckPayload();
         rf24radio.openWritingPipe((const uint8_t *)"DMXTX");
         rf24radio.openReadingPipe(1, (const uint8_t *)"DMXTX");
@@ -87,7 +87,7 @@ void Wireless::init() {
     } else if (boardConfig.activeConfig->radioRole == RadioRole::mesh) {
         LOG("RF24: Mesh setNodeID to %d", boardConfig.activeConfig->radioAddress);
         rf24mesh.setNodeID(boardConfig.activeConfig->radioAddress);
-        rf24mesh.begin();
+        rf24mesh.begin(boardConfig.activeConfig->radioChannel, boardConfig.activeConfig->radioParams.dataRate);
     }
 }
 
@@ -116,6 +116,12 @@ void Wireless::cyclicTask() {
                 rf24mesh.DHCP();
 
                 if (rf24mesh.addrListTop) {
+                    statusLeds.setStatic(6, 0, 0, 1);
+                } else {
+                    statusLeds.setStatic(6, 1, 0, 0);
+                }
+            } else {
+                if (rf24mesh.checkConnection()) {
                     statusLeds.setStatic(6, 0, 1, 0);
                 } else {
                     statusLeds.setStatic(6, 1, 0, 0);
@@ -298,6 +304,24 @@ std::string Wireless::getWirelessStats() {
     output["sentTried"] = stats.sentTried;
     output["sentSuccess"] = stats.sentSuccess;
     output["received"] = stats.received;
+
+    if (boardConfig.activeConfig->radioRole == RadioRole::mesh) {
+        uint32_t fails = 0;
+        uint32_t oks = 0;
+        rf24network.failures(&fails, &oks);
+        output["networkFails"] = (Json::Value::UInt)fails;
+        output["networkOKs"] = (Json::Value::UInt)oks;
+
+        if (boardConfig.activeConfig->radioAddress == 0) {
+            for (int i = 0; i < rf24mesh.addrListTop; i++) {
+                // TODO: Octal display? At least of the addresses?
+                char adr[10];
+                snprintf(adr, 10, "%#o", rf24mesh.addrList[i].address);
+                output["meshNodes"][rf24mesh.addrList[i].nodeID] = std::string(adr);
+            }
+        }
+    }
+
     output_string = Json::writeString(wbuilder, output);
     return output_string;
 }
