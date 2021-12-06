@@ -11,7 +11,7 @@
 #include "debug_struct.h"
 extern struct DebugStruct debugStruct;
 
-#include "tx16.pio.h"           // Header file for the PIO program
+#include "tx_dmx.pio.h"           // Header file for the PIO program
 
 extern LocalDmx localDmx;
 
@@ -69,9 +69,9 @@ void LocalDmx::init() {
 #endif // PIN_TRIGGER
 
     // Set up a PIO state machine to serialise our bits at 250000 bit/s
-    uint offset = pio_add_program(pio0, &tx16_program);
+    uint offset = pio_add_program(pio0, &tx_dmx_program);
     float div = (float)clock_get_hz(clk_sys) / 250000;
-    tx16_program_init(pio0, 0, offset, div);
+    tx_dmx_program_init(pio0, 0, offset, 6, 16, div); // TODO: Make pin base and count depending on board config
 
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
