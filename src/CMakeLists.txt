@@ -17,6 +17,7 @@ include(../lib/RF24Mesh/CMakeLists.txt)
 include(../lib/snappy/interfaceLibForPicoSDK.cmake)
 include(../lib/libb64/CMakeLists.txt)
 include(../lib/jsconcpp/interfaceLibForPicoSDK.cmake)
+include(../lib/Pico-DMX/interfaceLibForPicoSDK.cmake)
 
 ## Extra stuff from TinyUSB, that is not part of tinyusb_device library
 set(PICO_TINYUSB_PATH ${PICO_SDK_PATH}/lib/tinyusb)
@@ -106,7 +107,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 )
 
 ## LWIP works a little bit different than the other libraries since
-## it ships its onw FileList
+## it ships its own FileList
 set(LWIP_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib/lwip)
 set (LWIP_INCLUDE_DIRS
     "${LWIP_DIR}/src/include"
@@ -137,6 +138,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_multicore
     pico_stdlib
     pico_unique_id
+    picodmx
     RF24
     RF24Network
     RF24Mesh
