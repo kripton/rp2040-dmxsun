@@ -94,6 +94,10 @@ int main() {
     // without having to do this in software because we're busy with other stuff
     BLINK_LED(BLINK_INIT);
 
+    gpio_init(PIN_LED);
+    gpio_set_dir(PIN_LED, true);
+    gpio_put(PIN_LED, 0);
+
     // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized /!\
 
     // Phase 0: Overclock the board to 250MHz. According to
@@ -127,6 +131,8 @@ int main() {
     tusb_init();
     stdio_usb_init();
     logger.init();
+
+    // LOGGING CAN BE USED FROM THIS POINT ONWARDS
 
     // Phase 6: Fire up the integrated web server
     webServer.init();
@@ -194,7 +200,7 @@ void core1_tasks() {
 //        webServer.cyclicTask();
         wireless.cyclicTask();
         statusLeds.cyclicTask();
-        led_blinking_task();
+        //led_blinking_task();
 //        sleep_us(10);
     }
 };
