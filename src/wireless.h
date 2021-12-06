@@ -49,19 +49,21 @@ class Wireless {
     Edp edpTX;
     Edp edpRX;
 
+    uint32_t lastMeshCheck;
+    uint8_t lastMeshCheckedNode;
+
     static uint8_t tmpBuf_RX0[600];
     static uint8_t tmpBuf_RX1[600];
     static uint8_t tmpBufQueueCopy[600];
     static uint8_t tmpBuf_TX1[600];
 
+    struct WirelessStats stats;
+
+
     void handleReceivedData();
     void doSendData();
 
     Patching findPatching(uint8_t universeId);
-
-    // Stats:
-    struct WirelessStats stats;
-
 };
 
 #endif // __cplusplus

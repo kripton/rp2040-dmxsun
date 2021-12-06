@@ -38,6 +38,9 @@ void Wireless::init() {
     // Stats
     memset(&stats, 0x00, sizeof(struct WirelessStats));
 
+    lastMeshCheck = 0;
+    lastMeshCheckedNode = 0;
+
     // RX path goes via RX0 from radio to EDP and RX1 is out buffer
     edpRX.init(tmpBuf_RX0, tmpBuf_RX1, 24, 32);
 
@@ -117,14 +120,46 @@ void Wireless::cyclicTask() {
 
                 if (rf24mesh.addrListTop) {
                     statusLeds.setStatic(6, 0, 0, 1);
+
+                    uint32_t time_now = board_millis();
+                    if ((lastMeshCheck + 200) > time_now) {
+                        return;
+                    }
+                    lastMeshCheck = time_now;
+
+                    // Ping one of the nodes
+                    for (uint8_t i = lastMeshCheckedNode; i < rf24mesh.addrListTop; i++) {
+                        if (lastMeshCheckedNode > rf24mesh.addrListTop) {
+                            lastMeshCheckedNode = 0;
+                        }
+                        RF24NetworkHeader headers(rf24mesh.addrList[i].address, NETWORK_PING);
+                        uint32_t pingtime=millis();
+                        bool ok = false;
+                        if(headers.to_node){
+                            ok = rf24network.write(headers,0,0);
+                        }
+                        pingtime = millis()-pingtime;
+                        LOG("Mesh Check: Node with address %#o, ok: %u, time: %ums", rf24mesh.addrList[i].address, ok, pingtime);
+                    }
                 } else {
                     statusLeds.setStatic(6, 1, 0, 0);
                 }
             } else {
+
+                uint32_t time_now = board_millis();
+                if ((lastMeshCheck + 200) > time_now) {
+                    return;
+                }
+                lastMeshCheck = time_now;
+
                 if (rf24mesh.checkConnection()) {
                     statusLeds.setStatic(6, 0, 1, 0);
                 } else {
                     statusLeds.setStatic(6, 1, 0, 0);
+                    if (!rf24mesh.renewAddress()) {
+                        LOG("Wireless Mesh check: RenewAddress failed :(");
+                        rf24mesh.begin(boardConfig.activeConfig->radioChannel, boardConfig.activeConfig->radioParams.dataRate);
+                    }
                 }
             }
             this->doSendData();
@@ -313,11 +348,14 @@ std::string Wireless::getWirelessStats() {
         output["networkOKs"] = (Json::Value::UInt)oks;
 
         if (boardConfig.activeConfig->radioAddress == 0) {
-            for (int i = 0; i < rf24mesh.addrListTop; i++) {
+            for (uint8_t i = 0; i < rf24mesh.addrListTop; i++) {
                 // TODO: Octal display? At least of the addresses?
                 char adr[10];
+                char nodeId[10];
                 snprintf(adr, 10, "%#o", rf24mesh.addrList[i].address);
-                output["meshNodes"][rf24mesh.addrList[i].nodeID] = std::string(adr);
+                snprintf(nodeId, 10, "%u", rf24mesh.addrList[i].nodeID);
+                LOG("getWirelessStats: Address: %02x (%s), NodeID: %u", rf24mesh.addrList[i].address, adr, rf24mesh.addrList[i].nodeID);
+                output["meshNodes"][nodeId] = std::string(adr);
             }
         }
     }
