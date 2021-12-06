@@ -72,7 +72,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 
 ## Add our rp2040-PIO programs here
 pico_generate_pio_header(${CMAKE_PROJECT_NAME}
-    ${CMAKE_CURRENT_LIST_DIR}/tx16.pio
+    ${CMAKE_CURRENT_LIST_DIR}/tx_dmx.pio
 )
 pico_generate_pio_header(${CMAKE_PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio
