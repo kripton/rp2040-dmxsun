@@ -5,6 +5,8 @@
 
 #include "pins.h"
 
+#include  "DmxInput.h"
+
 #ifndef LOCALDMX_COUNT
 #define LOCALDMX_COUNT 16
 #endif // LOCALDMX_COUNT
@@ -17,6 +19,7 @@
 class LocalDmx {
   public:
     static uint8_t buffer[LOCALDMX_COUNT][512];
+    static uint8_t inBuffer[8][512];
     bool setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength); // alias "copyFrom"
     void init();
 
@@ -50,6 +53,8 @@ class LocalDmx {
     // TODO: Check if those work for RDM ports (or fewer universes than 16)
     void wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value);
     void wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value);
+
+    DmxInput dmxInput;
 };
 
 #endif // __cplusplus

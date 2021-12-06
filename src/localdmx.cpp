@@ -1,6 +1,11 @@
 #include "log.h"
 #include "localdmx.h"
 
+// TEMPORARY for DmxInput
+#include "dmxbuffer.h"
+extern DmxBuffer dmxBuffer;
+// /TEMPORARY for DmxInput
+
 #include <string.h>
 
 #include <hardware/clocks.h>    // To derive our 250000bit/s from sys_clk
@@ -13,14 +18,13 @@ extern struct DebugStruct debugStruct;
 
 #include "tx_dmx.pio.h"           // Header file for the PIO program
 
-#include  "DmxInput.h"
-
 extern LocalDmx localDmx;
 
 extern critical_section_t bufferLock;
 
 uint8_t LocalDmx::buffer[LOCALDMX_COUNT][512];
 uint16_t LocalDmx::wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
+uint8_t LocalDmx::inBuffer[8][512];
 
 // DMX OUT-ONLY (max 16 universes) are on PIO 1, SM 2 and use   IRQ 1
 // STATUS LEDs (ws2812) are on PIO 1, SM 3
@@ -82,6 +86,7 @@ void LocalDmx::init() {
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
     this->dma_chan_1_2 = dma_claim_unused_channel(true);
+    LOG("LocalDmx is using DMA channel %u", this->dma_chan_1_2);
     dma_channel_config c = dma_channel_get_default_config(this->dma_chan_1_2);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
     channel_config_set_read_increment(&c, true); // TODO: is by default. Line needed?
@@ -98,15 +103,22 @@ void LocalDmx::init() {
     );
 
     // Tell the DMA to raise IRQ line 1 when the channel finishes a block
-    dma_channel_set_irq1_enabled(this->dma_chan_1_2, true);
+    dma_channel_set_irq0_enabled(this->dma_chan_1_2, true);
 
     // Configure the processor to run dma_handler() when DMA IRQ 1 is asserted
-    irq_set_exclusive_handler(DMA_IRQ_1, dma_handler_1_2_c);
-    irq_set_enabled(DMA_IRQ_1, true);
+    //irq_set_exclusive_handler(DMA_IRQ_1, dma_handler_1_2_c);
+    irq_add_shared_handler(DMA_IRQ_0, dma_handler_1_2_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(DMA_IRQ_0, true);
 
     // Manually call the handler once, to trigger the first transfer
-    //dma_handler();
     this->dma_handler_1_2();
+
+    memset(inBuffer, 0x00, 8*512);
+    DmxInput::return_code retVal = dmxInput.begin(14, 0, 128, pio0);
+    LOG("DmxInput.begin returned %u", retVal);
+    
+
+    dmxInput.read_async(dmxBuffer.buffer[8]);
 }
 
 bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
@@ -165,7 +177,7 @@ void dma_handler_1_2_c() {
 
 // One transfer has finished, prepare the next DMX packet and restart the
 // DMA transfer
-void LocalDmx::dma_handler_1_2() {
+void __isr LocalDmx::dma_handler_1_2() {
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
@@ -177,7 +189,7 @@ void LocalDmx::dma_handler_1_2() {
     debugStruct.dma_ints1 = dma_hw->ints1;
 
     // Check if it was our DMA chan that triggered the IRQ
-    if (!(dma_hw->ints0 & (1u<<dma_chan_0_0))) {
+    if (!(dma_hw->ints1 & (1u<<dma_chan_1_2))) {
         // If not, do nothing
         return;
     }
@@ -222,7 +234,7 @@ void LocalDmx::dma_handler_1_2() {
     critical_section_exit(&bufferLock);
 
     // Clear the interrupt request.
-    dma_hw->ints1 = 1u << dma_chan_1_2;
+    dma_hw->ints0 = 1u << dma_chan_1_2;
 
     // Give the channel a new wavetable-entry to read from, and re-trigger it
     dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
