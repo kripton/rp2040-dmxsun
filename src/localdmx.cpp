@@ -11,6 +11,11 @@
 #include "debug_struct.h"
 extern struct DebugStruct debugStruct;
 
+// TEMPORARY for DmxInput
+#include "dmxbuffer.h"
+extern DmxBuffer dmxBuffer;
+// /TEMPORARY for DmxInput
+
 #include "tx_dmx.pio.h"           // Header file for the PIO program
 
 extern LocalDmx localDmx;
@@ -19,6 +24,9 @@ extern critical_section_t bufferLock;
 
 uint8_t LocalDmx::buffer[LOCALDMX_COUNT][512];
 uint16_t LocalDmx::wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
+
+// DMX OUT-ONLY (max 16 universes) are on PIO 1, SM 2 and use DMA IRQ 0
+// STATUS LEDs (ws2812) are on PIO 1, SM 3, no DMA and no IRQ
 
 // So, we have 7 state machines for "local output"
 // - WS2812 LEDs (besides) the status LEDs work but won't be supported for now.
@@ -69,22 +77,24 @@ void LocalDmx::init() {
 #endif // PIN_TRIGGER
 
     // Set up a PIO state machine to serialise our bits at 250000 bit/s
-    uint offset = pio_add_program(pio0, &tx_dmx_program);
+    uint offset = pio_add_program(pio1, &tx_dmx_program);
     float div = (float)clock_get_hz(clk_sys) / 250000;
-    tx_dmx_program_init(pio0, 0, offset, 6, 16, div); // TODO: Make pin base and count depending on board config
+    // TODO: /!\ Temporarily reduced to 8 universes so we an play around with GPIOs 14-21 (DMX IN ;) /!\ //
+    tx_dmx_program_init(pio1, 2, offset, 6, 8, div); // TODO: Make pin base and count depending on board config
+    //tx_dmx_program_init(pio1, 2, offset, 6, 16, div); // TODO: Make pin base and count depending on board config
 
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
-    this->dma_chan_0_0 = dma_claim_unused_channel(true);
-    dma_channel_config c = dma_channel_get_default_config(this->dma_chan_0_0);
+    this->dma_chan_1_2 = dma_claim_unused_channel(true);
+    dma_channel_config c = dma_channel_get_default_config(this->dma_chan_1_2);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
     channel_config_set_read_increment(&c, true); // TODO: is by default. Line needed?
-    channel_config_set_dreq(&c, DREQ_PIO0_TX0);
+    channel_config_set_dreq(&c, DREQ_PIO1_TX2);
 
     dma_channel_configure(
-        this->dma_chan_0_0,
+        this->dma_chan_1_2,
         &c,
-        &pio0_hw->txf[0], // Write address (only need to set this once)
+        &pio1_hw->txf[2], // Write address (only need to set this once)
         NULL,             // Don't provide a read address yet
         WAVETABLE_LENGTH/2, // Write one complete DMX packet, then halt and interrupt
                           // It's WAVETABLE_LENGTH/2 since we transfer 32 bit per transfer
@@ -92,7 +102,7 @@ void LocalDmx::init() {
     );
 
     // Tell the DMA to raise IRQ line 0 when the channel finishes a block
-    dma_channel_set_irq0_enabled(this->dma_chan_0_0, true);
+    dma_channel_set_irq0_enabled(this->dma_chan_1_2, true);
 
     // Configure the processor to run the handler when DMA IRQ 0 is asserted
     irq_set_exclusive_handler(DMA_IRQ_0, irq_handler_dma_irq0_c);
@@ -103,7 +113,7 @@ void LocalDmx::init() {
     memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
 
     // Manually call the handler once to trigger the first transfer
-    dma_channel_set_read_addr(dma_chan_0_0, wavetable, true);
+    dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
 }
 
 bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
@@ -162,7 +172,7 @@ void irq_handler_dma_irq0_c() {
 
 // One transfer has finished, prepare the next DMX packet and restart the
 // DMA transfer
-void LocalDmx::irq_handler_dma_chan_0_0() {
+void LocalDmx::irq_handler_dma_chan_1_2() {
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
@@ -207,7 +217,7 @@ void LocalDmx::irq_handler_dma_chan_0_0() {
     critical_section_exit(&bufferLock);
 
     // Give the channel a new wavetable-entry to read from, and re-trigger it
-    dma_channel_set_read_addr(dma_chan_0_0, wavetable, true);
+    dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
 
 #ifdef PIN_TRIGGER
     // Drive the TRIGGER GPIO to HIGH
@@ -224,8 +234,8 @@ void LocalDmx::irq_handler_dma_irq0() {
     debugStruct.dma_ints1 = dma_hw->ints1;
 
     // Check the DMA channel that triggered the IRQ
-    if ((dma_hw->ints0 & (1u<<dma_chan_0_0))) {
-        irq_handler_dma_chan_0_0();
+    if ((dma_hw->ints0 & (1u<<dma_chan_1_2))) {
+        irq_handler_dma_chan_1_2();
     }
     // TODO: Other DMA channels!
 
