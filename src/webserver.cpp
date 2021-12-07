@@ -8,6 +8,9 @@
 
 #include "json/json.h"
 
+#include "debug_struct.h"
+extern struct DebugStruct debugStruct;
+
 #include "log.h"
 #include "statusleds.h"
 #include "boardconfig.h"
@@ -377,7 +380,17 @@ u16_t WebServer::ssi_handler(const char* ssi_tag_name, char *pcInsert, int iInse
 
     wbuilder["indentation"] = "";
 
-    if (tagName == "OverviewGet") {
+
+    if (tagName == "Debug") {
+        output["dma_inte0"] = (int)debugStruct.dma_inte0;
+        output["dma_ints0"] = (int)debugStruct.dma_ints0;
+        output["dma_inte1"] = (int)debugStruct.dma_inte1;
+        output["dma_ints1"] = (int)debugStruct.dma_ints1;
+        output["irq0_counter"] = debugStruct.irq0_counter;
+        output_string = Json::writeString(wbuilder, output);
+        return snprintf(pcInsert, iInsertLen, "%s", output_string.c_str());
+
+    } else if (tagName == "OverviewGet") {
         char ownIp[16];
         char ownMask[16];
         char hostIp[16];
