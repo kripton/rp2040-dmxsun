@@ -33,6 +33,9 @@ class LocalDmx {
     void irq_handler_dma_chan_1_2();
 
   private:
+    void initRxDmx(uint pin);
+    void initTxDmx(uint pin_base, uint pin_count); // "Fallback": 16 output universes
+
     // TODO: Do we need more than one for multiple SMs? Or could we use
     //       ONE DMA channel for multiple SMs?
     // TODO: The RP2040 has 12 DMA channels. Are 7 available or already

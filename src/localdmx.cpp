@@ -17,6 +17,7 @@ extern DmxBuffer dmxBuffer;
 // /TEMPORARY for DmxInput
 
 #include "tx_dmx.pio.h"           // Header file for the PIO program
+#include "rx_dmx.pio.h"           // Header file for the PIO program
 
 extern LocalDmx localDmx;
 
@@ -69,6 +70,82 @@ void LocalDmx::init() {
     //       attached to which slot), check for VALIDITY and configure
     //       the PIO state machines accordingly
 
+    initRxDmx(14);
+
+    // TODO: Make pin base and count depending on board config
+    // TODO: /!\ Temporarily reduced to 8 universes so we an play around with GPIOs 14-21 (DMX IN ;) /!\ //
+    initTxDmx(6, 8);
+    //initTxDmx(6, 16);
+}
+
+void LocalDmx::initRxDmx(uint pin) {
+    uint offset = pio_add_program(pio0, &rx_dmx_program);
+
+    // Set this pin's GPIO function (connect PIO to the pad)
+    pio_sm_set_consecutive_pindirs(pio1, 0, pin, 1, false);
+    pio_gpio_init(pio0, pin);
+    gpio_pull_up(pin);
+
+    // Generate the default PIO state machine config provided by pioasm
+    pio_sm_config sm_conf = rx_dmx_program_get_default_config(offset);
+    sm_config_set_in_pins(&sm_conf, pin); // for WAIT, IN
+    sm_config_set_jmp_pin(&sm_conf, pin); // for JMP
+
+    // Setup the side-set pins for the PIO state machine
+    // Shift to right, autopush disabled
+    sm_config_set_in_shift(&sm_conf, true, false, 32);
+    // Deeper FIFO as we're not doing any TX
+    sm_config_set_fifo_join(&sm_conf, PIO_FIFO_JOIN_RX);
+
+    // Setup the clock divider to run the state machine at exactly 1MHz
+    uint clk_div = clock_get_hz(clk_sys) / 1000000;
+    sm_config_set_clkdiv(&sm_conf, clk_div);
+
+    // Load our configuration, jump to the start of the program and run the State Machine
+    pio_sm_init(pio0, 0, offset, &sm_conf);
+
+    dma_chan_0_0 = dma_claim_unused_channel(true);
+
+
+    // 8< BEGIN done. read_async 8<
+
+    // Reset the PIO state machine to a consistent state. Clear the buffers and registers
+    pio_sm_restart(pio0, 0);
+
+    // Start the DMX PIO program from the beginning
+    //pio_sm_exec(pio0, 0, pio_encode_jmp(offset));
+
+    //setup dma
+    dma_channel_config cfg = dma_channel_get_default_config(dma_chan_0_0);
+
+    // Reading from constant address, writing to incrementing byte addresses
+    channel_config_set_transfer_data_size(&cfg, DMA_SIZE_32);
+    channel_config_set_read_increment(&cfg, false);
+    channel_config_set_write_increment(&cfg, true);
+
+    // Pace transfers based on DREQ_PIO0_RX0 (or whichever pio and sm we are using)
+    channel_config_set_dreq(&cfg, DREQ_PIO0_RX0);
+
+    #define DMXINPUT_BUFFER_SIZE(start_channel, num_channels) ((start_channel+num_channels+1)+((4-(start_channel+num_channels+1)%4)%4))
+    dma_channel_configure(
+        dma_chan_0_0, 
+        &cfg,
+        NULL,    // dst
+        //dmxBuffer.buffer[8],    // dst
+        &pio0->rxf[0],  // src
+        DMXINPUT_BUFFER_SIZE(0, 512)/4,  // transfer count,
+        false
+    );
+
+    dma_channel_set_irq0_enabled(dma_chan_0_0, true);
+
+    // Call the IRQ handler once
+    irq_handler_dma_chan_0_0();
+
+    pio_sm_set_enabled(pio0, 0, true);
+}
+
+void LocalDmx::initTxDmx(uint pin_base, uint pin_count) {
     // Set up our TRIGGER GPIO init it to LOW
 #ifdef PIN_TRIGGER
     gpio_init(PIN_TRIGGER);
@@ -79,9 +156,7 @@ void LocalDmx::init() {
     // Set up a PIO state machine to serialise our bits at 250000 bit/s
     uint offset = pio_add_program(pio1, &tx_dmx_program);
     float div = (float)clock_get_hz(clk_sys) / 250000;
-    // TODO: /!\ Temporarily reduced to 8 universes so we an play around with GPIOs 14-21 (DMX IN ;) /!\ //
-    tx_dmx_program_init(pio1, 2, offset, 6, 8, div); // TODO: Make pin base and count depending on board config
-    //tx_dmx_program_init(pio1, 2, offset, 6, 16, div); // TODO: Make pin base and count depending on board config
+    tx_dmx_program_init(pio1, 2, offset, pin_base, pin_count, div);
 
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
@@ -109,7 +184,7 @@ void LocalDmx::init() {
     //irq_add_shared_handler(DMA_IRQ_0, dma_handler_0_0_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
 
-    // Zero the wavetable so we don't output garbage
+    // Zero the wavetable so we don't output garbage on the first run
     memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
 
     // Manually call the handler once to trigger the first transfer
@@ -170,9 +245,24 @@ void irq_handler_dma_irq0_c() {
     localDmx.irq_handler_dma_irq0();
 }
 
+void LocalDmx::irq_handler_dma_chan_0_0() {
+    debugStruct.dma_0_0_counter++;
+/*
+            dma_channel_set_write_addr(dma_chan_0_0, dmxBuffer.buffer[8], true);
+            pio_sm_exec(pio0, 0, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
+            pio_sm_clear_fifos(instance->_pio, instance->_sm);
+#ifdef ARDUINO
+            instance->_last_packet_timestamp = millis();
+#else
+            instance->_last_packet_timestamp = to_ms_since_boot(get_absolute_time());
+*/
+}
+
 // One transfer has finished, prepare the next DMX packet and restart the
 // DMA transfer
 void LocalDmx::irq_handler_dma_chan_1_2() {
+    debugStruct.dma_1_2_counter++;
+
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
@@ -234,12 +324,26 @@ void LocalDmx::irq_handler_dma_irq0() {
     debugStruct.dma_ints1 = dma_hw->ints1;
 
     // Check the DMA channel that triggered the IRQ
+
+    if ((dma_hw->ints0 & (1u<<dma_chan_0_0))) {
+        irq_handler_dma_chan_0_0();
+        dma_hw->ints0 |= (1u<<dma_chan_0_0);
+    }
+
     if ((dma_hw->ints0 & (1u<<dma_chan_1_2))) {
         irq_handler_dma_chan_1_2();
+        dma_hw->ints0 |= (1u<<dma_chan_1_2);
     }
     // TODO: Other DMA channels!
 
+
+    // TODO: I'm not sure which approach is better:
+    //       Clearing each IRQ flag right after its handler has been processed
+    //       OR
+    //       Clearing ALL IRQ flags after all handlers have been processed
+
+    // TODO: What happens when the IRQ handler is busy while DMX bytes are coming in?
+
     // All possible sources for this IRQ have been handled, reset all sources
     dma_hw->ints0 = 0x0000ffff;
-    return;
 };
