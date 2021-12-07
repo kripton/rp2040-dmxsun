@@ -387,6 +387,11 @@ u16_t WebServer::ssi_handler(const char* ssi_tag_name, char *pcInsert, int iInse
         output["dma_inte1"] = (int)debugStruct.dma_inte1;
         output["dma_ints1"] = (int)debugStruct.dma_ints1;
         output["irq0_counter"] = debugStruct.irq0_counter;
+        output["irq1_counter"] = debugStruct.irq1_counter;
+        output["localDmx_dmaChan"] = debugStruct.localDmx_dmaChan;
+        output["input_startChan"] = debugStruct.input_startChan;
+        output["input_numChan"] = debugStruct.input_numChan;
+        output["input_dmaChan"] = debugStruct.input_dmaChan;
         output_string = Json::writeString(wbuilder, output);
         return snprintf(pcInsert, iInsertLen, "%s", output_string.c_str());
 

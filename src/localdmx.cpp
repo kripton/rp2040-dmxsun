@@ -86,6 +86,7 @@ void LocalDmx::init() {
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
     this->dma_chan_1_2 = dma_claim_unused_channel(true);
+    debugStruct.localDmx_dmaChan = this->dma_chan_1_2;
     LOG("LocalDmx is using DMA channel %u", this->dma_chan_1_2);
     dma_channel_config c = dma_channel_get_default_config(this->dma_chan_1_2);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
@@ -103,20 +104,22 @@ void LocalDmx::init() {
     );
 
     // Tell the DMA to raise IRQ line 1 when the channel finishes a block
-    dma_channel_set_irq0_enabled(this->dma_chan_1_2, true);
+    dma_channel_set_irq1_enabled(this->dma_chan_1_2, true);
 
     // Configure the processor to run dma_handler() when DMA IRQ 1 is asserted
     //irq_set_exclusive_handler(DMA_IRQ_1, dma_handler_1_2_c);
-    irq_add_shared_handler(DMA_IRQ_0, dma_handler_1_2_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    irq_set_enabled(DMA_IRQ_0, true);
+    irq_add_shared_handler(DMA_IRQ_1, dma_handler_1_2_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(DMA_IRQ_1, true);
+
+    // Zero the wavetable so we don't output garbage
+    memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
 
     // Manually call the handler once, to trigger the first transfer
-    this->dma_handler_1_2();
+    dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
 
     memset(inBuffer, 0x00, 8*512);
     DmxInput::return_code retVal = dmxInput.begin(14, 0, 128, pio0);
     LOG("DmxInput.begin returned %u", retVal);
-    
 
     dmxInput.read_async(dmxBuffer.buffer[8]);
 }
@@ -182,7 +185,7 @@ void __isr LocalDmx::dma_handler_1_2() {
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
 
-    debugStruct.irq0_counter++;
+    debugStruct.irq1_counter++;
     debugStruct.dma_inte0 = dma_hw->inte0;
     debugStruct.dma_ints0 = dma_hw->ints0;
     debugStruct.dma_inte1 = dma_hw->inte1;
@@ -234,7 +237,7 @@ void __isr LocalDmx::dma_handler_1_2() {
     critical_section_exit(&bufferLock);
 
     // Clear the interrupt request.
-    dma_hw->ints0 = 1u << dma_chan_1_2;
+    dma_hw->ints1 = 1u << dma_chan_1_2;
 
     // Give the channel a new wavetable-entry to read from, and re-trigger it
     dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);

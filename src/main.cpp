@@ -95,7 +95,11 @@ void core1_tasks(void);
 int main() {
     // Make the onboard-led blink like crazy during the INIT phase
     // without having to do this in software because we're busy with other stuff
-    BLINK_LED(BLINK_INIT);
+    //BLINK_LED(BLINK_INIT);
+
+    gpio_set_dir(25, true);
+    gpio_set_function(25, gpio_function::GPIO_FUNC_SIO);
+    gpio_put(25, 0);
 
     // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized (Phase 5) /!\
 
