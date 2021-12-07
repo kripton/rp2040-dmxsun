@@ -94,7 +94,7 @@ int main() {
     // without having to do this in software because we're busy with other stuff
     BLINK_LED(BLINK_INIT);
 
-    // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized /!\
+    // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized (Phase 5) /!\
 
     // Phase 0: Overclock the board to 250MHz. According to
     //          https://www.youtube.com/watch?v=G2BuoFNLo this should be
@@ -127,6 +127,8 @@ int main() {
     tusb_init();
     stdio_usb_init();
     logger.init();
+
+    // LOGGING CAN BE USED FROM THIS POINT ONWARDS
 
     // Phase 6: Fire up the integrated web server
     webServer.init();
