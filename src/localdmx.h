@@ -20,14 +20,17 @@ class LocalDmx {
     bool setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength); // alias "copyFrom"
     void init();
 
-    // 7 DMA handlers, one for each state machine
-    void dma_handler_0_0(); // The DMA handler to call if PIO 0, SM0 needs data
-    void dma_handler_0_1(); // The DMA handler to call if PIO 0, SM1 needs data
-    void dma_handler_0_2(); // The DMA handler to call if PIO 0, SM2 needs data
-    void dma_handler_0_3(); // The DMA handler to call if PIO 0, SM3 needs data
-    void dma_handler_1_0(); // The DMA handler to call if PIO 1, SM0 needs data
-    void dma_handler_1_1(); // The DMA handler to call if PIO 1, SM1 needs data
-    void dma_handler_1_2(); // The DMA handler to call if PIO 1, SM2 needs data
+    // 2 IRQ handlers, one for each DMA_IRQ line. Currently, we use DMA_IRQ0 on core 0
+    void irq_handler_dma_irq0(); // The DMA handler to call if DMA_IRQ0 fired
+    void irq_handler_dma_irq1(); // The DMA handler to call if DMA_IRQ1 fired
+
+    void irq_handler_dma_chan_0_0();
+    void irq_handler_dma_chan_0_1();
+    void irq_handler_dma_chan_0_2();
+    void irq_handler_dma_chan_0_3();
+    void irq_handler_dma_chan_1_0();
+    void irq_handler_dma_chan_1_1();
+    void irq_handler_dma_chan_1_2();
 
   private:
     // TODO: Do we need more than one for multiple SMs? Or could we use
@@ -59,13 +62,8 @@ class LocalDmx {
 extern "C" {
 #endif
 
-    void dma_handler_0_0_c(); // The DMA handler to call if PIO 0, SM0 needs data
-    void dma_handler_0_1_c(); // The DMA handler to call if PIO 0, SM1 needs data
-    void dma_handler_0_2_c(); // The DMA handler to call if PIO 0, SM2 needs data
-    void dma_handler_0_3_c(); // The DMA handler to call if PIO 0, SM3 needs data
-    void dma_handler_1_0_c(); // The DMA handler to call if PIO 1, SM0 needs data
-    void dma_handler_1_1_c(); // The DMA handler to call if PIO 1, SM1 needs data
-    void dma_handler_1_2_c(); // The DMA handler to call if PIO 1, SM2 needs data
+    void irq_handler_dma_irq0_c(); // The IRQ handler to call if DMA_IRQ0 fired
+    void irq_handler_dma_irq1_c(); // The IRQ handler to call if DMA_IRQ1 fired
 
 #ifdef __cplusplus
 }

@@ -94,8 +94,9 @@ void LocalDmx::init() {
     // Tell the DMA to raise IRQ line 0 when the channel finishes a block
     dma_channel_set_irq0_enabled(this->dma_chan_0_0, true);
 
-    // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
-    irq_add_shared_handler(DMA_IRQ_0, dma_handler_0_0_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    // Configure the processor to run the handler when DMA IRQ 0 is asserted
+    irq_set_exclusive_handler(DMA_IRQ_0, irq_handler_dma_irq0_c);
+    //irq_add_shared_handler(DMA_IRQ_0, dma_handler_0_0_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
 
     // Zero the wavetable so we don't output garbage
@@ -155,28 +156,16 @@ void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value
     this->wavetable_write_bit(port, bitoffset, 1);
 };
 
-void dma_handler_0_0_c() {
-    localDmx.dma_handler_0_0();
+void irq_handler_dma_irq0_c() {
+    localDmx.irq_handler_dma_irq0();
 }
 
 // One transfer has finished, prepare the next DMX packet and restart the
 // DMA transfer
-void LocalDmx::dma_handler_0_0() {
+void LocalDmx::irq_handler_dma_chan_0_0() {
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
-
-    debugStruct.irq0_counter++;
-    debugStruct.dma_inte0 = dma_hw->inte0;
-    debugStruct.dma_ints0 = dma_hw->ints0;
-    debugStruct.dma_inte1 = dma_hw->inte1;
-    debugStruct.dma_ints1 = dma_hw->ints1;
-
-    // Check if it was our DMA chan that triggered the IRQ
-    if (!(dma_hw->ints0 & (1u<<dma_chan_0_0))) {
-        // If not, do nothing
-        return;
-    }
 
 #ifdef PIN_TRIGGER
     // Drive the TRIGGER GPIO to LOW
@@ -217,9 +206,6 @@ void LocalDmx::dma_handler_0_0() {
 
     critical_section_exit(&bufferLock);
 
-    // Clear the interrupt request.
-    dma_hw->ints0 = 1u << dma_chan_0_0;
-
     // Give the channel a new wavetable-entry to read from, and re-trigger it
     dma_channel_set_read_addr(dma_chan_0_0, wavetable, true);
 
@@ -227,4 +213,23 @@ void LocalDmx::dma_handler_0_0() {
     // Drive the TRIGGER GPIO to HIGH
     gpio_put(PIN_TRIGGER, 1);
 #endif // PIN_TRIGGER
+
+}
+
+void LocalDmx::irq_handler_dma_irq0() {
+    debugStruct.irq0_counter++;
+    debugStruct.dma_inte0 = dma_hw->inte0;
+    debugStruct.dma_ints0 = dma_hw->ints0;
+    debugStruct.dma_inte1 = dma_hw->inte1;
+    debugStruct.dma_ints1 = dma_hw->ints1;
+
+    // Check the DMA channel that triggered the IRQ
+    if ((dma_hw->ints0 & (1u<<dma_chan_0_0))) {
+        irq_handler_dma_chan_0_0();
+    }
+    // TODO: Other DMA channels!
+
+    // All possible sources for this IRQ have been handled, reset all sources
+    dma_hw->ints0 = 0x0000ffff;
+    return;
 };
