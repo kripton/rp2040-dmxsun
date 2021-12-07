@@ -19,6 +19,9 @@ extern "C" {
 #include "stdio_usb.h"
 }
 
+#include "debug_struct.h"
+struct DebugStruct debugStruct;
+
 #include "log.h"
 #include "dmxbuffer.h"
 #include "statusleds.h"
