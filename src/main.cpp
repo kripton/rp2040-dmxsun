@@ -203,7 +203,7 @@ void core1_tasks() {
 //        webServer.cyclicTask();
         wireless.cyclicTask();
         statusLeds.cyclicTask();
-        //led_blinking_task();
+        led_blinking_task();
 //        sleep_us(10);
     }
 };
