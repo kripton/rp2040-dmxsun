@@ -19,7 +19,7 @@
 class LocalDmx {
   public:
     static uint8_t buffer[LOCALDMX_COUNT][512];
-    static uint8_t inBuffer[8][512];
+    static uint8_t inBuffer[8][513];
     bool setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength); // alias "copyFrom"
     void init();
 
@@ -31,6 +31,8 @@ class LocalDmx {
     void dma_handler_1_0(); // The DMA handler to call if PIO 1, SM0 needs data
     void dma_handler_1_1(); // The DMA handler to call if PIO 1, SM1 needs data
     void dma_handler_1_2(); // The DMA handler to call if PIO 1, SM2 needs data
+
+    void input_0_updated();
 
   private:
     // TODO: Do we need more than one for multiple SMs? Or could we use
@@ -71,6 +73,8 @@ extern "C" {
     void dma_handler_1_0_c(); // The DMA handler to call if PIO 1, SM0 needs data
     void dma_handler_1_1_c(); // The DMA handler to call if PIO 1, SM1 needs data
     void dma_handler_1_2_c(); // The DMA handler to call if PIO 1, SM2 needs data
+
+    void input_0_updated_c();
 
 #ifdef __cplusplus
 }

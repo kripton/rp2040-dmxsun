@@ -1,5 +1,6 @@
 #include "log.h"
 #include "localdmx.h"
+#include "statusleds.h"
 
 // TEMPORARY for DmxInput
 #include "dmxbuffer.h"
@@ -19,12 +20,13 @@ extern struct DebugStruct debugStruct;
 #include "tx_dmx.pio.h"           // Header file for the PIO program
 
 extern LocalDmx localDmx;
+extern StatusLeds statusLeds;
 
 extern critical_section_t bufferLock;
 
 uint8_t LocalDmx::buffer[LOCALDMX_COUNT][512];
 uint16_t LocalDmx::wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
-uint8_t LocalDmx::inBuffer[8][512];
+uint8_t LocalDmx::inBuffer[8][513];
 
 // DMX OUT-ONLY (max 16 universes) are on PIO 1, SM 2 and use   IRQ 1
 // STATUS LEDs (ws2812) are on PIO 1, SM 3
@@ -118,10 +120,10 @@ void LocalDmx::init() {
     dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
 
     memset(inBuffer, 0x00, 8*512);
-    DmxInput::return_code retVal = dmxInput.begin(14, 0, 128, pio0);
+    DmxInput::return_code retVal = dmxInput.begin(14, 0, 512, pio0);
     LOG("DmxInput.begin returned %u", retVal);
 
-    dmxInput.read_async(dmxBuffer.buffer[8]);
+    dmxInput.read_async(inBuffer[0], input_0_updated_c);
 }
 
 bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
@@ -176,6 +178,14 @@ void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value
 
 void dma_handler_1_2_c() {
     localDmx.dma_handler_1_2();
+}
+
+void input_0_updated_c() {
+    localDmx.input_0_updated();
+}
+
+void LocalDmx::input_0_updated() {
+    statusLeds.setBlinkOnce(7, 0, 1, 0);
 }
 
 // One transfer has finished, prepare the next DMX packet and restart the
