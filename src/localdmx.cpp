@@ -116,7 +116,9 @@ bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
     critical_section_exit(&bufferLock);
 
     // TEMPORARY: Do the transfer NOW
-    this->dma_handler_0_0();
+    if (!dma_channel_is_busy(0)) {
+        this->dma_handler_0_0();
+    }
 
     return true;
 }
