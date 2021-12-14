@@ -115,6 +115,9 @@ bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
     memcpy(this->buffer[portId], source, length);
     critical_section_exit(&bufferLock);
 
+    // TEMPORARY: Do the transfer NOW
+    this->dma_handler_0_0();
+
     return true;
 }
 
@@ -151,7 +154,8 @@ void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value
 };
 
 void dma_handler_0_0_c() {
-    localDmx.dma_handler_0_0();
+    dma_hw->ints0 = 1u << 0;
+    //localDmx.dma_handler_0_0();
 }
 
 // One transfer has finished, prepare the next DMX packet and restart the
