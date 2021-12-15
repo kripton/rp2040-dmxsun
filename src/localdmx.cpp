@@ -72,6 +72,21 @@ void LocalDmx::init() {
     //       attached to which slot), check for VALIDITY and configure
     //       the PIO state machines accordingly
 
+    initMultiUniverseOutput();
+
+    // Init local DMX input for testing
+    memset(inBuffer, 0x00, 8*512);
+
+    DmxInput::return_code retVal = dmxInput_0.begin(14, 0, 512, pio0);
+    LOG("DmxInput.begin port 14 returned %u", retVal);
+    dmxInput_0.read_async(inBuffer[0], input_updated_c);
+
+    retVal = dmxInput_1.begin(15, 0, 512, pio0);
+    LOG("DmxInput.begin port 15 returned %u", retVal);
+    dmxInput_1.read_async(inBuffer[1], input_updated_c);
+}
+
+void LocalDmx::initMultiUniverseOutput() {
     // Set up our TRIGGER GPIO init it to LOW
 #ifdef PIN_TRIGGER
     gpio_init(PIN_TRIGGER);
@@ -118,12 +133,6 @@ void LocalDmx::init() {
 
     // Manually call the handler once, to trigger the first transfer
     dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
-
-    memset(inBuffer, 0x00, 8*512);
-    DmxInput::return_code retVal = dmxInput.begin(14, 0, 512, pio0);
-    LOG("DmxInput.begin returned %u", retVal);
-
-    dmxInput.read_async(inBuffer[0], input_0_updated_c);
 }
 
 bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
@@ -180,13 +189,19 @@ void dma_handler_1_2_c() {
     localDmx.dma_handler_1_2();
 }
 
-void input_0_updated_c() {
-    localDmx.input_0_updated();
+void input_updated_c(DmxInput* instance) {
+    localDmx.input_updated(instance);
 }
 
-void LocalDmx::input_0_updated() {
+void __isr LocalDmx::input_updated(DmxInput* instance) {
+    // Inside here: Don't log, don't sleep*
+    //LOG("Input on pin %u changed!", instance->pin());
     statusLeds.setBlinkOnce(7, 0, 1, 0);
-    dmxBuffer.setBuffer(0, inBuffer[0] + 1, 512); // TODO: Proper patch handling!
+    if (instance->pin() == 14) {
+        dmxBuffer.setBuffer(0, inBuffer[0] + 1, 512); // TODO: Proper patch handling!
+    } else if (instance->pin() == 15) {
+        dmxBuffer.setBuffer(1, inBuffer[1] + 1, 512); // TODO: Proper patch handling!
+    }
 }
 
 // One transfer has finished, prepare the next DMX packet and restart the

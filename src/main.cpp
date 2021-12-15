@@ -234,7 +234,7 @@ void led_blinking_task(void) {
     // LED off = no universes has channels != 0
     // LED blue = one universe has channels != 0
     // LED purple = multiple universe has channels != 0
-    if (universes_none_zero > 2) {
+    if (universes_none_zero >= 2) {
         BLINK_LED(BLINK_READY_MULTI_UNI);
         statusLeds.setStatic(7, 1, 0, 1);
     } else if (universes_none_zero == 1) {
