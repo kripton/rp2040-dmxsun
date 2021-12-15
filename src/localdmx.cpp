@@ -2,10 +2,9 @@
 #include "localdmx.h"
 #include "statusleds.h"
 
-// TEMPORARY for DmxInput
+// For DMX input:
 #include "dmxbuffer.h"
 extern DmxBuffer dmxBuffer;
-// /TEMPORARY for DmxInput
 
 #include <string.h>
 
@@ -24,7 +23,7 @@ extern StatusLeds statusLeds;
 
 extern critical_section_t bufferLock;
 
-uint8_t LocalDmx::buffer[LOCALDMX_COUNT][512];
+uint8_t LocalDmx::buffer[LOCALDMX_COUNT][513];
 uint16_t LocalDmx::wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
 uint8_t LocalDmx::inBuffer[8][513];
 
@@ -75,7 +74,7 @@ void LocalDmx::init() {
     initMultiUniverseOutput();
 
     // Init local DMX input for testing
-    memset(inBuffer, 0x00, 8*512);
+    memset(inBuffer, 0x00, 8*513);
 
     DmxInput::return_code retVal = dmxInput_0.begin(14, 0, 512, pio0);
     LOG("DmxInput.begin port 14 returned %u", retVal);
@@ -102,16 +101,16 @@ void LocalDmx::initMultiUniverseOutput() {
 
     // Configure a channel to write the wavetable to PIO0
     // SM0's TX FIFO, paced by the data request signal from that peripheral.
-    this->dma_chan_1_2 = dma_claim_unused_channel(true);
-    debugStruct.localDmx_dmaChan = this->dma_chan_1_2;
-    LOG("LocalDmx is using DMA channel %u", this->dma_chan_1_2);
-    dma_channel_config c = dma_channel_get_default_config(this->dma_chan_1_2);
+    this->dma_chan_MultiUniOut = dma_claim_unused_channel(true);
+    debugStruct.localDmx_dmaChan = this->dma_chan_MultiUniOut;
+    LOG("LocalDmx is using DMA channel %u", this->dma_chan_MultiUniOut);
+    dma_channel_config c = dma_channel_get_default_config(this->dma_chan_MultiUniOut);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
     channel_config_set_read_increment(&c, true); // TODO: is by default. Line needed?
     channel_config_set_dreq(&c, DREQ_PIO1_TX2);
 
     dma_channel_configure(
-        this->dma_chan_1_2,
+        this->dma_chan_MultiUniOut,
         &c,
         &pio1_hw->txf[2], // Write address (only need to set this once)
         NULL,             // Don't provide a read address yet
@@ -121,18 +120,19 @@ void LocalDmx::initMultiUniverseOutput() {
     );
 
     // Tell the DMA to raise IRQ line 1 when the channel finishes a block
-    dma_channel_set_irq1_enabled(this->dma_chan_1_2, true);
+    dma_channel_set_irq1_enabled(this->dma_chan_MultiUniOut, true);
 
     // Configure the processor to run dma_handler() when DMA IRQ 1 is asserted
-    //irq_set_exclusive_handler(DMA_IRQ_1, dma_handler_1_2_c);
-    irq_add_shared_handler(DMA_IRQ_1, dma_handler_1_2_c, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    //irq_set_exclusive_handler(DMA_IRQ_1, irq_handler_MultiUniOut_c);
+    irq_set_exclusive_handler(DMA_IRQ_1, irq_handler_MultiUniOut_c);
     irq_set_enabled(DMA_IRQ_1, true);
 
     // Zero the wavetable so we don't output garbage
+    memset(buffer, 0x00, LOCALDMX_COUNT*513);
     memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
 
     // Manually call the handler once, to trigger the first transfer
-    dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
+    dma_channel_set_read_addr(dma_chan_MultiUniOut, wavetable, true);
 }
 
 bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
@@ -146,8 +146,8 @@ bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
     uint16_t length = MIN(sourceLength, 512);
 
     critical_section_enter_blocking(&bufferLock);
-    memset(this->buffer[portId], 0x00, 512);
-    memcpy(this->buffer[portId], source, length);
+    memset(this->buffer[portId]+1, 0x00, 512);
+    memcpy(this->buffer[portId]+1, source, length);
     critical_section_exit(&bufferLock);
 
     return true;
@@ -185,8 +185,8 @@ void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value
     this->wavetable_write_bit(port, bitoffset, 1);
 };
 
-void dma_handler_1_2_c() {
-    localDmx.dma_handler_1_2();
+void irq_handler_MultiUniOut_c() {
+    localDmx.irq_handler_MultiUniOut();
 }
 
 void input_updated_c(DmxInput* instance) {
@@ -206,19 +206,13 @@ void __isr LocalDmx::input_updated(DmxInput* instance) {
 
 // One transfer has finished, prepare the next DMX packet and restart the
 // DMA transfer
-void __isr LocalDmx::dma_handler_1_2() {
+void __isr LocalDmx::irq_handler_MultiUniOut() {
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
 
-    debugStruct.irq1_counter++;
-    debugStruct.dma_inte0 = dma_hw->inte0;
-    debugStruct.dma_ints0 = dma_hw->ints0;
-    debugStruct.dma_inte1 = dma_hw->inte1;
-    debugStruct.dma_ints1 = dma_hw->ints1;
-
     // Check if it was our DMA chan that triggered the IRQ
-    if (!(dma_hw->ints1 & (1u<<dma_chan_1_2))) {
+    if (!(dma_hw->ints1 & (1u<<dma_chan_MultiUniOut))) {
         // If not, do nothing
         return;
     }
@@ -249,10 +243,10 @@ void __isr LocalDmx::dma_handler_1_2() {
         wavetable_write_bit(universe, &bitoffset, 1);
 
         // Write the startbyte
-        wavetable_write_byte(universe, &bitoffset, 0);
+        wavetable_write_byte(universe, &bitoffset, this->buffer[universe][0]);
 
         // Write the data (channel values) from the universe's buffer
-        for (chan = 0; chan < 512; chan++) {
+        for (chan = 1; chan < 513; chan++) {
             wavetable_write_byte(universe, &bitoffset, this->buffer[universe][chan]);
         }
 
@@ -263,10 +257,10 @@ void __isr LocalDmx::dma_handler_1_2() {
     critical_section_exit(&bufferLock);
 
     // Clear the interrupt request.
-    dma_hw->ints1 = 1u << dma_chan_1_2;
+    dma_hw->ints1 = 1u << dma_chan_MultiUniOut;
 
     // Give the channel a new wavetable-entry to read from, and re-trigger it
-    dma_channel_set_read_addr(dma_chan_1_2, wavetable, true);
+    dma_channel_set_read_addr(dma_chan_MultiUniOut, wavetable, true);
 
 #ifdef PIN_TRIGGER
     // Drive the TRIGGER GPIO to HIGH

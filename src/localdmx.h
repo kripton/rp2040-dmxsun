@@ -28,23 +28,18 @@ struct PortStatus {
 // Class that stores and manages ALL local DMX ports
 class LocalDmx {
   public:
-    static uint8_t buffer[LOCALDMX_COUNT][512];
+    static uint8_t buffer[LOCALDMX_COUNT][513];
     static uint8_t inBuffer[8][513];
     bool setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength); // alias "copyFrom"
 
     void init();
     void initMultiUniverseOutput();
 
-    // 7 DMA handlers, one for each state machine
-    void dma_handler_0_0(); // The DMA handler to call if PIO 0, SM0 needs data
-    void dma_handler_0_1(); // The DMA handler to call if PIO 0, SM1 needs data
-    void dma_handler_0_2(); // The DMA handler to call if PIO 0, SM2 needs data
-    void dma_handler_0_3(); // The DMA handler to call if PIO 0, SM3 needs data
-    void dma_handler_1_0(); // The DMA handler to call if PIO 1, SM0 needs data
-    void dma_handler_1_1(); // The DMA handler to call if PIO 1, SM1 needs data
-    void dma_handler_1_2(); // The DMA handler to call if PIO 1, SM2 needs data
+    // The IRQ handler called if MultiUniverseOutput needs data
+    void __isr irq_handler_MultiUniOut();
 
-    void input_updated(DmxInput* instance);
+    // The IRQ handler called if there is new DMX data on an input
+    void __isr input_updated(DmxInput* instance);
 
   private:
     struct PortStatus portStati[16];
@@ -53,13 +48,7 @@ class LocalDmx {
     //       ONE DMA channel for multiple SMs?
     // TODO: The RP2040 has 12 DMA channels. Are 7 available or already
     //       claimed by s.th. else?
-    int dma_chan_0_0;                  // The DMA channel for PIO 0, SM0
-    int dma_chan_0_1;                  // The DMA channel for PIO 0, SM1
-    int dma_chan_0_2;                  // The DMA channel for PIO 0, SM2
-    int dma_chan_0_3;                  // The DMA channel for PIO 0, SM3
-    int dma_chan_1_0;                  // The DMA channel for PIO 1, SM0
-    int dma_chan_1_1;                  // The DMA channel for PIO 1, SM1
-    int dma_chan_1_2;                  // The DMA channel for PIO 1, SM2
+    int dma_chan_MultiUniOut;                  // The DMA channel for PIO 1, SM2
     // PIO 1, SM3 is used for the Status LEDs
 
     // TODO: This assumes 16 OUTs
@@ -76,6 +65,14 @@ class LocalDmx {
     DmxInput dmxInput_3;
     DmxInput dmxInput_5;
     DmxInput dmxInput_6;
+
+    DmxOutput dmxOutput_0;
+    DmxOutput dmxOutput_1;
+    DmxOutput dmxOutput_2;
+    DmxOutput dmxOutput_3;
+    DmxOutput dmxOutput_4;
+    DmxOutput dmxOutput_5;
+
     bool incomingQueueValid[6];
     uint8_t incomingQueueData[6][513];
 };
@@ -87,9 +84,11 @@ class LocalDmx {
 extern "C" {
 #endif
 
-    void dma_handler_1_2_c(); // The DMA handler to call if PIO 1, SM2 needs data
+    // The IRQ handler called if MultiUniverseOutput needs data
+    void __isr irq_handler_MultiUniOut_c();
 
-    void input_updated_c(DmxInput* instance);
+    // The IRQ handler called if there is new DMX data on an input
+    void __isr input_updated_c(DmxInput* instance);
 
 #ifdef __cplusplus
 }
