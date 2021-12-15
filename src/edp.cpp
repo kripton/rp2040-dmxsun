@@ -8,7 +8,7 @@
 extern BoardConfig boardConfig;
 extern DmxBuffer dmxBuffer;
 
-extern critical_section_t bufferLock;
+extern mutex_t bufferLock;
 
 void Edp::init(uint8_t* inData, uint8_t* outData, uint8_t patchingOffset, uint16_t maxSendChunkSize) {
     this->initOkay = false;
@@ -207,18 +207,18 @@ bool Edp::processIncomingChunk(uint16_t chunkSize) {
             // Clear outData so the following chunks comes in clean
             copySize = MIN((chunkSize - sizeof(Edp_Commands) - sizeof(struct Edp_DmxData_ChunkHeader)), 600);
             LOG("DmxData: FIRST chunk. Will copy %u byte", copySize);
-            critical_section_enter_blocking(&bufferLock);
+            mutex_enter_blocking(&bufferLock);
             memset(outData, 0x00, 600);
             memcpy(outData, inData + sizeof(Edp_Commands) + sizeof(struct Edp_DmxData_ChunkHeader), copySize);
-            critical_section_exit(&bufferLock);
+            mutex_exit(&bufferLock);
             prepareDmxData_chunkOffset = copySize;
         } else if (chunkHeader->chunkCounter < 32) {
             // Some intermediate packet: Just copy it to outData
             copySize = MIN((chunkSize - sizeof(Edp_Commands) - sizeof(struct Edp_DmxData_ChunkHeader)), 600);
             LOG("DmxData: INTERMEDIATE chunk. Will copy %u at offset %u", copySize, prepareDmxData_chunkOffset);
-            critical_section_enter_blocking(&bufferLock);
+            mutex_enter_blocking(&bufferLock);
             memcpy(outData + prepareDmxData_chunkOffset, inData + sizeof(Edp_Commands) + sizeof(struct Edp_DmxData_ChunkHeader), copySize);
-            critical_section_exit(&bufferLock);
+            mutex_exit(&bufferLock);
             prepareDmxData_chunkOffset += copySize;
         }
 

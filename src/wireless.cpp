@@ -16,7 +16,7 @@ extern StatusLeds statusLeds;
 extern BoardConfig boardConfig;
 extern DmxBuffer dmxBuffer;
 
-extern critical_section_t bufferLock;
+extern mutex_t bufferLock;
 
 uint8_t Wireless::tmpBuf_RX0[600]; // Used to store incoming data from radio
 uint8_t Wireless::tmpBuf_RX1[600]; // Used by edpRX to assemble the packets
@@ -157,10 +157,10 @@ void Wireless::sendData(uint8_t universeId, uint8_t *source, uint16_t sourceLeng
     uint16_t length = MIN(sourceLength, 512);
 
     // TODO: Mutex should be fine here, no reason to disables IRQs
-    critical_section_enter_blocking(&bufferLock);
+    mutex_enter_blocking(&bufferLock);
     memset(this->sendQueueData[universeId], 0x00, 512);
     memcpy(this->sendQueueData[universeId], source, length);
-    critical_section_exit(&bufferLock);
+    mutex_exit(&bufferLock);
 
     this->sendQueueValid[universeId] = true;
 }
@@ -182,12 +182,12 @@ void Wireless::doSendData() {
     for (int i = 0; i < 4; i++) {
         if (this->sendQueueValid[i]) {
 
-            critical_section_enter_blocking(&bufferLock);
+            mutex_enter_blocking(&bufferLock);
             this->sendQueueValid[i] = false;
 
             // Copy the data away to somewhere it doesn't change while we read it
             memcpy(Wireless::tmpBufQueueCopy, this->sendQueueData[i], 512);
-            critical_section_exit(&bufferLock);
+            mutex_exit(&bufferLock);
 
             triedToSend = true;
             statusLeds.setBlinkOnce(6, 0, 1, 0);

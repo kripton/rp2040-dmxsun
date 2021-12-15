@@ -21,7 +21,7 @@ extern struct DebugStruct debugStruct;
 extern LocalDmx localDmx;
 extern StatusLeds statusLeds;
 
-extern critical_section_t bufferLock;
+extern mutex_t bufferLock;
 
 uint8_t LocalDmx::buffer[LOCALDMX_COUNT][513];
 uint16_t LocalDmx::wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
@@ -145,10 +145,10 @@ bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
 
     uint16_t length = MIN(sourceLength, 512);
 
-    critical_section_enter_blocking(&bufferLock);
+    mutex_enter_blocking(&bufferLock);
     memset(this->buffer[portId]+1, 0x00, 512);
     memcpy(this->buffer[portId]+1, source, length);
-    critical_section_exit(&bufferLock);
+    mutex_exit(&bufferLock);
 
     return true;
 }
@@ -222,7 +222,7 @@ void __isr LocalDmx::irq_handler_MultiUniOut() {
     gpio_put(PIN_TRIGGER, 0);
 #endif // PIN_TRIGGER
 
-    critical_section_enter_blocking(&bufferLock);
+    mutex_enter_blocking(&bufferLock);
 
     // Zero the wavetable. *2 because of the data type: uint16_t = 2 byte per element
     memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
@@ -254,7 +254,7 @@ void __isr LocalDmx::irq_handler_MultiUniOut() {
         wavetable_write_bit(universe, &bitoffset, 0);
     }
 
-    critical_section_exit(&bufferLock);
+    mutex_exit(&bufferLock);
 
     // Clear the interrupt request.
     dma_hw->ints1 = 1u << dma_chan_MultiUniOut;
