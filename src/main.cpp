@@ -99,6 +99,11 @@ int main() {
 
     // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized (Phase 5) /!\
 
+    // Configure the debugging pin as output
+    gpio_set_function(PIN_DEBUG_0, GPIO_FUNC_SIO);
+    gpio_set_dir(PIN_DEBUG_0, true);
+    gpio_put(PIN_DEBUG_0, true);
+
     // Phase 0: Overclock the board to 250MHz. According to
     //          https://www.youtube.com/watch?v=G2BuoFNLo this should be
     //          totally safe with the default 1.10V Vcore

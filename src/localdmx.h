@@ -44,18 +44,11 @@ class LocalDmx {
   private:
     struct PortStatus portStati[16];
 
-    // TODO: Do we need more than one for multiple SMs? Or could we use
-    //       ONE DMA channel for multiple SMs?
-    // TODO: The RP2040 has 12 DMA channels. Are 7 available or already
-    //       claimed by s.th. else?
     int dma_chan_MultiUniOut;                  // The DMA channel for PIO 1, SM2
-    // PIO 1, SM3 is used for the Status LEDs
 
-    // TODO: This assumes 16 OUTs
     static uint16_t wavetable[WAVETABLE_LENGTH];  // 16 universes (data type) with 5648 bit each
 
     // Helper functions for DMX output generation
-    // TODO: Check if those work for RDM ports (or fewer universes than 16)
     void wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value);
     void wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value);
 

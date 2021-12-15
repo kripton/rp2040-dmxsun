@@ -51,3 +51,8 @@
 // this is mainly useful to trigger an oscilloscope to check the
 // generated DMX frames
 #define PIN_TRIGGER    26
+
+
+// Pins free for debugging (attached a logic analyzer,
+// measure events and durations, ...)
+#define PIN_DEBUG_0    27
