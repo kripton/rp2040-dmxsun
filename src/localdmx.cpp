@@ -186,6 +186,7 @@ void input_0_updated_c() {
 
 void LocalDmx::input_0_updated() {
     statusLeds.setBlinkOnce(7, 0, 1, 0);
+    dmxBuffer.setBuffer(0, inBuffer[0] + 1, 512); // TODO: Proper patch handling!
 }
 
 // One transfer has finished, prepare the next DMX packet and restart the

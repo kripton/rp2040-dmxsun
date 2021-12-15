@@ -95,11 +95,7 @@ void core1_tasks(void);
 int main() {
     // Make the onboard-led blink like crazy during the INIT phase
     // without having to do this in software because we're busy with other stuff
-    //BLINK_LED(BLINK_INIT);
-
-    gpio_set_dir(25, true);
-    gpio_set_function(25, gpio_function::GPIO_FUNC_SIO);
-    gpio_put(25, 0);
+    BLINK_LED(BLINK_INIT);
 
     // /!\ Do NOT use LOG() until TinyUSB-stack has been initialized (Phase 5) /!\
 
@@ -233,17 +229,19 @@ void led_blinking_task(void) {
         }
     }
 
-    if (universes_none_zero == 0) {
-        BLINK_LED(BLINK_READY_NO_DATA);
-        statusLeds.setStatic(7, 0, 0, 0);
+    // For the last LED we have the components RED and BLUE
+    // Green (blinking) is reserved for detected DMX input
+    // LED off = no universes has channels != 0
+    // LED blue = one universe has channels != 0
+    // LED purple = multiple universe has channels != 0
+    if (universes_none_zero > 2) {
+        BLINK_LED(BLINK_READY_MULTI_UNI);
+        statusLeds.setStatic(7, 1, 0, 1);
     } else if (universes_none_zero == 1) {
         BLINK_LED(BLINK_READY_SINGLE_UNI);
-        statusLeds.setStatic(7, 0, 1, 0);
-    } else if (universes_none_zero > 4) {
-        BLINK_LED(BLINK_READY_MULTI_UNI);
-        statusLeds.setStatic(7, 1, 1, 1);
-    } else if (universes_none_zero > 1) {
-        BLINK_LED(BLINK_READY_MULTI_UNI);
         statusLeds.setStatic(7, 0, 0, 1);
+    } else {
+        BLINK_LED(BLINK_READY_NO_DATA);
+        statusLeds.setStatic(7, 0, 0, 0);
     }
 }
