@@ -17,6 +17,7 @@
 // Data types (enums and structs) are defined in artnet_in.cpp since they
 // are used only there
 
+//! Handles incoming Art-Net data and handles Art-Net polls and replies accordingly
 class Udp_ArtNet {
   public:
     static void init();

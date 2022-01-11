@@ -7,14 +7,14 @@
 
 extern DmxBuffer dmxBuffer;
 
-// General header, used by in front of most packets
+//! General header, used by in front of most packets
 struct ArtNet_Header {
-  char id[8]; // Needs to be 'Art-Net\0'
+  char id[8]; //!< Fixed 'Art-Net\0'
   uint16_t opCode; // TODO: ENUM
   uint16_t protoVersion; // TODO: ENUM?
 };
 
-// New DMX values. Uses general header
+//! New DMX values. Has general header in front of it.
 struct ArtNet_OpDmx {
   uint8_t sequence;
   uint8_t physical;
@@ -23,13 +23,13 @@ struct ArtNet_OpDmx {
   uint8_t data[512];
 };
 
-// Poll for nodes, sent by masters. Uses general header
+//! Poll for ArtNet nodes, sent by masters. Has general header in front of it.
 struct ArtNet_OpPoll {
   uint8_t flags;
   uint8_t priority;
 };
 
-// Poll Reply by nodes. Does NOT use the general header
+//! Poll Reply by nodes. Does NOT have general header in front of it.
 struct __attribute__((__packed__)) ArtNet_OpPollReply {
   char id[8];
   uint16_t opCode;
@@ -65,7 +65,8 @@ struct __attribute__((__packed__)) ArtNet_OpPollReply {
   uint8_t  filler[26];
 };
 
-// Constant to we can fast memcmp or memcpy
+// Constant id for Art-Net packages in headers. Defined here so we can do
+// fast memcmp or memcpy
 const char ArtNetId[8] = "Art-Net";
 
 // Readily-prepared OpPollReply so it's not re-created every time
@@ -73,11 +74,12 @@ struct ArtNet_OpPollReply Udp_ArtNet::opPollReply;
 
 udp_pcb* Udp_ArtNet::pcb;
 
-// UDP recv callback (for C-based code, not part of the class)
+//! UDP recv callback (for C-based code, so not part of the class)
 static void artnet_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
   Udp_ArtNet::receive(arg, pcb, p, addr, port);
 }
 
+//! UDP receive callback
 void Udp_ArtNet::receive(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
     struct pbuf *p_send;
 

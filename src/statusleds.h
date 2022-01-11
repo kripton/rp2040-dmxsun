@@ -5,16 +5,19 @@
 
 #include "pins.h"
 
-// Status LEDs:
-// LED0: IO Board 00
-// LED1: IO Board 01
-// LED2: IO Board 10
-// LED3: IO Board 11
-// LED4: System/Config status (Default config, Everything okay)
-// LED5: USB host detected / activity
-// LED6: Wireless status / activity
-// LED7: 
-
+/**
+ * Controls the on-board Status LEDs (WS2812b-based).
+ * <pre>
+ * LED0: IO Board 00
+ * LED1: IO Board 01
+ * LED2: IO Board 10
+ * LED3: IO Board 11
+ * LED4: System / config status (Fallback config, Everything okay)
+ * LED5: USB host detected / activity
+ * LED6: Wireless status / activity
+ * LED7: Universes in use
+ * </pre>
+*/
 class StatusLeds {
   public:
     void init();
