@@ -33,7 +33,7 @@ void BoardConfig::init() {
     gpio_set_function(PIN_I2C_SDA, GPIO_FUNC_I2C);
     // Pull-ups are populated on Rev 0.1 base boards
     // so the internal ones are not required. However, they don't hurt
-    // and the plan is to remove the external ones
+    // and the plan is to remove the external ones in later hardware revisions.
     gpio_pull_up(PIN_I2C_SCL);
     gpio_pull_up(PIN_I2C_SDA);
     memset(this->rawData, 0xff, 5*256);

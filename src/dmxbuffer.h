@@ -9,11 +9,17 @@
 
 #ifdef __cplusplus
 
-// Class that stores and manages ALL internal "main" DMX buffers
+/**
+ * The DmxBuffer class stores and manages ALL internal "main" DMX buffers.
+ * Those internal buffers are the ones, that all DMX data needs to pass
+ * through. Incoming data is written here using the setBuffer or setChannel
+ * methods. These methods also check if the respictive buffer is patched to
+ * an output and will copy the data there.
+ */
 class DmxBuffer {
   public:
     static uint8_t buffer[DMXBUFFER_COUNT][512];
-    static uint8_t allZeroes[512]; // Array of 512 zero-bytes to be used with memcmp for performance
+    static uint8_t allZeroes[512]; //!< Array of 512 zero-bytes to be used with memcmp for performance
     void init();
     void zero(uint8_t bufferId);
     bool getBuffer(uint8_t bufferId, uint8_t* dest, uint16_t destLength); // alias "copyTo"
