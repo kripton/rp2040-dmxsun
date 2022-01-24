@@ -1,6 +1,10 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
 
+/**
+ * @file
+*/
+
 #include "pico/bootrom.h"
 #include "hardware/watchdog.h"
 #include "hardware/structs/watchdog.h"

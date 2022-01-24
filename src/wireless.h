@@ -1,6 +1,10 @@
 #ifndef WIRELESS_H
 #define WIRELESS_H
 
+/**
+ * @file
+*/
+
 #include "pins.h"
 
 #ifdef __cplusplus

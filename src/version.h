@@ -1,3 +1,7 @@
+/**
+ * @file
+*/
+
 #define VERSION "1.0.0"
 
 // Version number reported in the USB device descriptor

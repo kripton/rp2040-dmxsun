@@ -1,6 +1,10 @@
 #ifndef LOCALDMX_H
 #define LOCALDMX_H
 
+/**
+ * @file
+*/
+
 #include <stdio.h>
 
 #include "pins.h"

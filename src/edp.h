@@ -1,6 +1,10 @@
 #ifndef EDP_H
 #define EDP_H
 
+/**
+ * @file
+*/
+
 #ifdef __cplusplus
 
 #include "log.h"

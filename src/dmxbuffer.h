@@ -1,6 +1,10 @@
 #ifndef DMXBUFFER_H
 #define DMXBUFFER_H
 
+/**
+ * @file
+*/
+
 #include <stdio.h>
 
 #ifndef DMXBUFFER_COUNT

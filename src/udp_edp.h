@@ -1,6 +1,10 @@
 #ifndef EDP_EDP_H
 #define EDP_EDP_H
 
+/**
+ * @file
+*/
+
 #include "pico/stdlib.h"
 
 #include "lwip/opt.h"

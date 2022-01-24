@@ -1,6 +1,10 @@
 #ifndef USB_EDP_H
 #define USB_EDP_H
 
+/**
+ * @file
+*/
+
 #include "tusb.h"
 #include <stdint.h>
 

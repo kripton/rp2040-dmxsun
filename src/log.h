@@ -1,6 +1,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+/**
+ * @file
+*/
+
 #include "pico/stdlib.h"
 #include "pico/mutex.h"
 #include "pico/util/queue.h"

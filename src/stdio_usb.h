@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/**
+ * @file
+*/
+
 #ifndef _PICO_STDIO_USB_H
 #define _PICO_STDIO_USB_H
 

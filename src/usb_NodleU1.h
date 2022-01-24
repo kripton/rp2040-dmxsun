@@ -1,6 +1,10 @@
 #ifndef USB_NODLEU1_H
 #define USB_NODLEU1_H
 
+/**
+ * @file
+*/
+
 #include "tusb.h"
 #include <stdint.h>
 

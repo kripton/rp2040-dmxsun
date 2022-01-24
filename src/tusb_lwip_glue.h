@@ -1,6 +1,10 @@
 #ifndef _TUSB_LWIP_GLUE_H_
 #define _TUSB_LWIP_GLUE_H_
 
+/**
+ * @file
+*/
+
 #ifdef __cplusplus
  extern "C" {
 #endif

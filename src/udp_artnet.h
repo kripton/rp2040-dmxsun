@@ -1,6 +1,10 @@
 #ifndef UDP_ARTNET_H
 #define UDP_ARTNET_H
 
+/**
+ * @file
+*/
+
 #include "pico/stdlib.h"
 
 #include "lwip/opt.h"

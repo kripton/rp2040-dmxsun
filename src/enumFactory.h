@@ -1,3 +1,7 @@
+/**
+ * @file
+*/
+
 // Taken from https://stackoverflow.com/a/202511
 // but added extern "C", enum BaseTypes and const Valid##EnumType##Values[]
 
