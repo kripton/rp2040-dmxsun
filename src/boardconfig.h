@@ -1,6 +1,10 @@
 #ifndef BOARDCONFIG_H
 #define BOARDCONFIG_H
 
+/**
+ * @file
+*/
+
 #include "pins.h"
 
 #include "enumFactory.h"
@@ -9,11 +13,11 @@
 #include <RF24.h>
 #endif
 
-// The config area in the flash is the last sector since the smallest
-// area we can erase is one sector. One sector is 4kByte large and
-// the Pico's flash is 2048kByte large. Thus, the config area starts
-// at offset 2044k.
-// However, we are only using the first 256 byte of that sector.
+//! The config area in the flash is the last sector since the smallest
+//! area we can erase is one sector. One sector is 4kByte large and
+//! the Pico's flash is 2048kByte large. Thus, the config area starts
+//! at offset 2044k.
+//! However, we are only using the first 256 byte of that sector.
 #define CONFIG_FLASH_OFFSET (2044 * 1024)
 
 #define MAX_PATCHINGS 32
@@ -217,6 +221,15 @@ static const ConfigData constDefaultConfig = {
     .statusLedBrightness = 20,
 };
 
+/**
+ * The BoardConfig class is responsible for providing the configuration the
+ * system should use and save configurations to specific slots.
+ * It does so by scanning the I2C-bus for connected EEPROMs of the IO boards,
+ * reading their content and determining if the data is a valid configuration.
+ * If no valid configuration has been found in an EEPROM, the internal flash
+ * could contain a valid configuration at offset #CONFIG_FLASH_OFFSET.
+ * If still no config has been found, a default configuration is provided.
+*/
 class BoardConfig {
   public:
     static ConfigData* activeConfig; // Pointer to the currently active configuration

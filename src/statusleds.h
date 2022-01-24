@@ -7,6 +7,7 @@
 
 /**
  * Controls the on-board Status LEDs (WS2812b-based).
+ * The LEDs are controlled by PIO 1, SM 3 and are connected to #PIN_LEDS
  * <pre>
  * LED0: IO Board 00
  * LED1: IO Board 01
@@ -15,7 +16,7 @@
  * LED4: System / config status (Fallback config, Everything okay)
  * LED5: USB host detected / activity
  * LED6: Wireless status / activity
- * LED7: Universes in use
+ * LED7: Number of universes in use
  * </pre>
 */
 class StatusLeds {
