@@ -56,6 +56,15 @@ struct Edp_DmxData_PacketHeader {
     uint8_t               sparseOffset;    // If sparse: Position the frame starts at
 };
 
+/**
+ * EDP - The efficient DMX protocol.
+ * The EDP class constructs and parses EDP packets that can then be transmitted
+ * or are received by classes using EDP (such as Wireless, UDP_EDP, ...).
+ * The advantages of EDP are: Sending very short "allZeroe"-packets when the
+ * buffer only contains the values "0", data compression using the Snappy
+ * algorithm if it reduces the size, sparse packets when the first n slots are
+ * not used and automatic chunking (chunk sizes 32 to 520 byte).
+*/
 class Edp {
   public:
     void init(uint8_t* inData, uint8_t* outData, uint8_t patchingOffset, uint16_t maxSendChunkSize);
