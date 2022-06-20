@@ -48,8 +48,8 @@ class LocalDmx {
 
     // Helper functions for DMX output generation
     // TODO: Check if those work for RDM ports (or fewer universes than 16)
-    void wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value);
-    void wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value);
+    void wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value, bool inverted = false);
+    void wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value, bool inverted = false);
 };
 
 #endif // __cplusplus

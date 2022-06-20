@@ -120,7 +120,14 @@ bool LocalDmx::setPort(uint8_t portId, uint8_t* source, uint16_t sourceLength) {
 
 // Appends one bit to the wavetable for port "port" at the position
 // bitoffset. The offset will be increased by 1!
-void LocalDmx::wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value) {
+void LocalDmx::wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value, bool inverted) {
+    if (inverted) {
+        if (value) {
+            value = 0;
+        } else {
+            value = 1;
+        }
+    }
     if (!value) {
         // Since initial value is 0, just increment the offset
         (*bitoffset)++;
@@ -132,22 +139,22 @@ void LocalDmx::wavetable_write_bit(int port, uint16_t* bitoffset, uint8_t value)
 
 // Appends one byte (including on start and two stop bits) to the wavetable for
 // given port at the given bit offset. This offset will be increased!
-void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value) {
+void LocalDmx::wavetable_write_byte(int port, uint16_t* bitoffset, uint8_t value, bool inverted) {
     // Start bit is 0
-    this->wavetable_write_bit(port, bitoffset, 0);
+    this->wavetable_write_bit(port, bitoffset, 0, inverted);
     // I assume LSB is first? At least it works :)
-    this->wavetable_write_bit(port, bitoffset, (value >> 0) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 1) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 2) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 3) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 4) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 5) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 6) & 0x01);
-    this->wavetable_write_bit(port, bitoffset, (value >> 7) & 0x01);
+    this->wavetable_write_bit(port, bitoffset, (value >> 0) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 1) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 2) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 3) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 4) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 5) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 6) & 0x01, inverted);
+    this->wavetable_write_bit(port, bitoffset, (value >> 7) & 0x01, inverted);
 
     // Write two stop bits
-    this->wavetable_write_bit(port, bitoffset, 1);
-    this->wavetable_write_bit(port, bitoffset, 1);
+    this->wavetable_write_bit(port, bitoffset, 1, inverted);
+    this->wavetable_write_bit(port, bitoffset, 1, inverted);
 };
 
 void dma_handler_0_0_c() {
@@ -172,7 +179,8 @@ void LocalDmx::dma_handler_0_0() {
     memset(wavetable, 0x00, WAVETABLE_LENGTH * sizeof(uint16_t));
 
     // Loop through all 16 universes
-    for (universe = 0; universe < 16; universe++) {
+    // EXPERIMENTAL differential output: 8 universes only!
+    for (universe = 0; universe < 8; universe++) {
         // Usually, DMX needs a BREAK (LOW level) of at least 96µs before
         // MARK-AFTER-BREAK (MAB, HIGH LEVEL)
         // However, since the line is already at a defined LOW level
@@ -181,21 +189,31 @@ void LocalDmx::dma_handler_0_0() {
         bitoffset = 0;
 
         // Write 4 bit MARK-AFTER-BREAK (16µs)
-        wavetable_write_bit(universe, &bitoffset, 1);
-        wavetable_write_bit(universe, &bitoffset, 1);
-        wavetable_write_bit(universe, &bitoffset, 1);
-        wavetable_write_bit(universe, &bitoffset, 1);
+        wavetable_write_bit(universe*2, &bitoffset, 1);
+        wavetable_write_bit(universe*2, &bitoffset, 1);
+        wavetable_write_bit(universe*2, &bitoffset, 1);
+        wavetable_write_bit(universe*2, &bitoffset, 1);
+        // inverted:
+        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
 
         // Write the startbyte
-        wavetable_write_byte(universe, &bitoffset, 0);
+        wavetable_write_byte(universe*2, &bitoffset, 0);
+        // inverted:
+        wavetable_write_byte(universe*2+1, &bitoffset, 0, true);
 
         // Write the data (channel values) from the universe's buffer
         for (chan = 0; chan < 512; chan++) {
-            wavetable_write_byte(universe, &bitoffset, this->buffer[universe][chan]);
+            wavetable_write_byte(universe*2, &bitoffset, this->buffer[universe][chan]);
+            wavetable_write_byte(universe*2+1, &bitoffset, this->buffer[universe][chan], true);
         }
 
         // Leave the line at a defined LOW level (BREAK) until the next packet starts
-        wavetable_write_bit(universe, &bitoffset, 0);
+        wavetable_write_bit(universe*2, &bitoffset, 0);
+        // inverted:
+        wavetable_write_bit(universe*2+1, &bitoffset, 0, true);
     }
 
     critical_section_exit(&bufferLock);
