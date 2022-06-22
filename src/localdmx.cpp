@@ -166,6 +166,7 @@ void dma_handler_0_0_c() {
 void LocalDmx::dma_handler_0_0() {
     uint8_t universe;   // Loop over the 16 universes
     uint16_t bitoffset; // Current bit offset inside current universe
+    uint16_t bitoffset_inverted; // Current bit offset inside current universe
     uint16_t chan;      // Current channel in universe
 
 #ifdef PIN_TRIGGER
@@ -187,6 +188,7 @@ void LocalDmx::dma_handler_0_0() {
         // and we need CPU time to prepare the wavetable (~3ms), we don't
         // generate a BREAK. We start right away with the MAB
         bitoffset = 0;
+        bitoffset_inverted = 0;
 
         // Write 4 bit MARK-AFTER-BREAK (16µs)
         wavetable_write_bit(universe*2, &bitoffset, 1);
@@ -194,26 +196,26 @@ void LocalDmx::dma_handler_0_0() {
         wavetable_write_bit(universe*2, &bitoffset, 1);
         wavetable_write_bit(universe*2, &bitoffset, 1);
         // inverted:
-        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
-        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
-        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
-        wavetable_write_bit(universe*2+1, &bitoffset, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset_inverted, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset_inverted, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset_inverted, 1, true);
+        wavetable_write_bit(universe*2+1, &bitoffset_inverted, 1, true);
 
         // Write the startbyte
         wavetable_write_byte(universe*2, &bitoffset, 0);
         // inverted:
-        wavetable_write_byte(universe*2+1, &bitoffset, 0, true);
+        wavetable_write_byte(universe*2+1, &bitoffset_inverted, 0, true);
 
         // Write the data (channel values) from the universe's buffer
         for (chan = 0; chan < 512; chan++) {
             wavetable_write_byte(universe*2, &bitoffset, this->buffer[universe][chan]);
-            wavetable_write_byte(universe*2+1, &bitoffset, this->buffer[universe][chan], true);
+            wavetable_write_byte(universe*2+1, &bitoffset_inverted, this->buffer[universe][chan], true);
         }
 
         // Leave the line at a defined LOW level (BREAK) until the next packet starts
         wavetable_write_bit(universe*2, &bitoffset, 0);
         // inverted:
-        wavetable_write_bit(universe*2+1, &bitoffset, 0, true);
+        wavetable_write_bit(universe*2+1, &bitoffset_inverted, 0, true);
     }
 
     critical_section_exit(&bufferLock);
