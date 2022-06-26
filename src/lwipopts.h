@@ -39,13 +39,16 @@
 #define MEMP_NUM_UDP_PCB                64
 #define MEMP_NUM_TCP_PCB                16
 #define MEMP_NUM_TCPIP_MSG_API          16
-#define LWIP_RAW                        0
+#define LWIP_RAW                        1
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
 #define LWIP_DHCP                       0
 #define LWIP_ICMP                       1
 #define LWIP_UDP                        1
 #define LWIP_TCP                        1
+#define LWIP_SNMP                       0
+#define LWIP_PPP                        0
+#define LWIP_IPV6                       0
 #define ETH_PAD_SIZE                    0
 #define LWIP_IP_ACCEPT_UDP_PORT(p)      ((p) == PP_NTOHS(67))
 
@@ -72,6 +75,6 @@
 #define HTTPD_USE_CUSTOM_FSDATA         1
 #define HTTPD_FSDATA_FILE               "../../../../../src/fsdata.c"
 
-#define LWIP_SINGLE_NETIF               1
+#define LWIP_SINGLE_NETIF               0
 
 #endif /* __LWIPOPTS_H__ */

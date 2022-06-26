@@ -17,6 +17,10 @@
 #define PIN_SPI_CS0     5
 #define PIN_RF24_CE    28
 
+// SPI to the optional ENC28J60 ethernet modules
+#define PIN_SPI_CS1    26
+#define PIN_ENC_IRQ    27
+
 // IO board 00
 #define PIN_IO00_0      6
 #define PIN_IO00_1      7
@@ -50,4 +54,5 @@
 // Helper pin for DMX TX (DriverEnable output)
 // this is mainly useful to trigger an oscilloscope to check the
 // generated DMX frames
-#define PIN_TRIGGER    26
+// Conflicts with PIN_SPI_CS1 for the ENC28J60-module
+//#define PIN_TRIGGER    26
