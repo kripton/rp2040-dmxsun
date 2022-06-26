@@ -11,6 +11,7 @@ extern "C" {
 }
 
 #include "tusb_lwip_glue.h"
+#include "enc28j60_lwip_glue.h"
 
 #include "version.h"
 

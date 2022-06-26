@@ -25,4 +25,4 @@ void service_traffic();
  }
 #endif
 
-#endif
+#endif // _TUSB_LWIP_GLUE_H_

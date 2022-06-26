@@ -81,6 +81,10 @@ void WebServer::init() {
     // TinyUSB already needs to be initialized at this point
     init_lwip();
     wait_for_netif_is_up();
+
+    // ENC28J60
+    enc28j60_init_highlevel();
+
     dhcpd_init();
     httpd_init();
     http_set_cgi_handlers(cgi_handlers, LWIP_ARRAYSIZE(cgi_handlers));
@@ -89,6 +93,7 @@ void WebServer::init() {
 
 void WebServer::cyclicTask() {
     service_traffic();
+    enc28j60_service_traffic();
 }
 
 void WebServer::ipToString(uint32_t ip, char* ipString) {
@@ -428,6 +433,7 @@ u16_t WebServer::ssi_handler(const char* ssi_tag_name, char *pcInsert, int iInse
         output["serial"] = unique_id_string;
         output["wirelessModule"] = wireless.moduleAvailable;
         output["statusLedBrightness"] = boardConfig.activeConfig->statusLedBrightness;
+        output["sizeOfConfigData"] = sizeof(ConfigData);
         output_string = Json::writeString(wbuilder, output);
         return snprintf(pcInsert, iInsertLen, "%s", output_string.c_str());
 

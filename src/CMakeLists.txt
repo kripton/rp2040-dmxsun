@@ -53,6 +53,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     crc_X25.c
     dmxbuffer.cpp
     edp.cpp
+    enc28j60_lwip_glue.c
     localdmx.cpp
     log.cpp
     main.cpp
@@ -68,6 +69,9 @@ add_executable(${CMAKE_PROJECT_NAME}
     usb_NodleU1.cpp
     webserver.cpp
     wireless.cpp
+
+    ../lib/pico-enc28j60/src/enc28j60.c
+    ../lib/pico-enc28j60/src/ethernetif.c
 )
 
 ## Add our rp2040-PIO programs here
@@ -114,11 +118,18 @@ set (LWIP_INCLUDE_DIRS
 )
 include(${LWIP_DIR}/src/Filelists.cmake)
 
+## pico-enc28j60 behaves a bit different than other INTERFACE libraries
+## so we do the steps manually here
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PUBLIC PICO_ENC28J60=1
+)
+
 ## Needed so tusb_config.h is found by the tinyUSB-library included in the pico-sdk
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${LWIP_INCLUDE_DIRS}
     ${PICO_TINYUSB_PATH}/lib/networking
     ${CMAKE_CURRENT_LIST_DIR}
+    ../lib/pico-enc28j60/include
 )
 
 ## Pull in all pico-sdk + non-pico-sdk libraries
