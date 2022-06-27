@@ -39,7 +39,7 @@
 #define MEMP_NUM_UDP_PCB                64
 #define MEMP_NUM_TCP_PCB                16
 #define MEMP_NUM_TCPIP_MSG_API          16
-#define LWIP_RAW                        1
+#define LWIP_RAW                        0
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
 #define LWIP_DHCP                       0

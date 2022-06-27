@@ -4,7 +4,7 @@
 #include "log.h"
 
 /* Configuration */
-#define RX_QUEUE_SIZE 10
+#define RX_QUEUE_SIZE 16
 #define MAC_ADDRESS { 0x62, 0x5E, 0x22, 0x07, 0xDE, 0x92 }
 #define IP_ADDRESS IPADDR4_INIT_BYTES(192, 168, 1, 200)
 #define NETWORK_MASK IPADDR4_INIT_BYTES(255, 255, 255, 0)
@@ -76,14 +76,20 @@ void enc28j60_init_highlevel()
 void enc28j60_service_traffic(void)
 {
 	struct pbuf* p = NULL;
+	int i = 0;
+	while (i <= 5) {
     queue_try_remove(&rx_queue, &p);
 	if (p != NULL) {
 	    if(netif.input(p, &netif) != ERR_OK) {
 			LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
 			pbuf_free(p);
 		}
+		i++;
+	} else {
+		break;
+	}
 	}
 
-	sys_check_timeouts();
-	best_effort_wfe_or_timeout(make_timeout_time_ms(sys_timeouts_sleeptime()));
+	//sys_check_timeouts();
+	//best_effort_wfe_or_timeout(make_timeout_time_ms(sys_timeouts_sleeptime()));
 }

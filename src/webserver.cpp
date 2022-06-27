@@ -94,6 +94,8 @@ void WebServer::init() {
 void WebServer::cyclicTask() {
     service_traffic();
     enc28j60_service_traffic();
+
+    sys_check_timeouts();
 }
 
 void WebServer::ipToString(uint32_t ip, char* ipString) {

@@ -199,7 +199,7 @@ void service_traffic(void)
       tud_network_recv_renew();
     }
     
-    sys_check_timeouts();
+    //sys_check_timeouts();
 }
 
 void dhcpd_init()
