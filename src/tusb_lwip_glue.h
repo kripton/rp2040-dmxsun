@@ -13,7 +13,11 @@
 #include <lwip/timeouts.h>
 #include <lwip/apps/httpd.h>
 
+#include <pico/util/queue.h>
+
 #include "boardconfig.h"
+
+#define TUSB_RX_QUEUE_SIZE 16
 
 void init_lwip();
 void wait_for_netif_is_up();

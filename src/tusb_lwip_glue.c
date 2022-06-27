@@ -37,7 +37,7 @@ extern uint8_t usbTraffic;
 static struct netif netif_data;
 
 /* shared between tud_network_recv_cb() and service_traffic() */
-static struct pbuf *received_frame;
+static queue_t tusb_rx_queue;
 
 /* this is used by this code, ./class/net/net_driver.c, and usb_descriptors.c */
 /* ideally speaking, this should be generated from the hardware's unique ID (if available) */
@@ -117,7 +117,9 @@ void init_lwip(void)
     /* Fixup MAC address based on flash serial */
     pico_unique_board_id_t id;
     pico_get_unique_board_id(&id);
-    
+
+    queue_init(&tusb_rx_queue, sizeof(struct pbuf *), TUSB_RX_QUEUE_SIZE);
+
     /* Initialize lwip */
     lwip_init();
     
@@ -144,20 +146,20 @@ void init_lwip(void)
 
 void tud_network_init_cb(void)
 {
-    /* if the network is re-initializing and we have a leftover packet, we must do a cleanup */
-    if (received_frame)
-    {
-      pbuf_free(received_frame);
-      received_frame = NULL;
+    /* if the network is re-initializing and we have leftover packets, we must do a cleanup */
+    struct pbuf* p = NULL;
+    int i = 0;
+    while (i <= 50) {
+        queue_try_remove(&tusb_rx_queue, &p);
+        if (p != NULL) {
+            pbuf_free(p);
+        }
+        i++;
     }
 }
 
 bool tud_network_recv_cb(const uint8_t *src, uint16_t size)
 {
-    /* this shouldn't happen, but if we get another packet before 
-    parsing the previous, we must signal our inability to accept it */
-    if (received_frame) return false;
-
     usbTraffic = 1;
     
     if (size)
@@ -168,9 +170,10 @@ bool tud_network_recv_cb(const uint8_t *src, uint16_t size)
         {
             /* pbuf_alloc() has already initialized struct; all we need to do is copy the data */
             memcpy(p->payload, src, size);
-        
-            /* store away the pointer for service_traffic() to later handle */
-            received_frame = p;
+
+            if (!queue_try_add(&tusb_rx_queue, &p)) {
+                pbuf_free(p);
+            }
         }
     }
 
@@ -190,15 +193,20 @@ uint16_t tud_network_xmit_cb(uint8_t *dst, void *ref, uint16_t arg)
 
 void service_traffic(void)
 {
-    /* handle any packet received by tud_network_recv_cb() */
-    if (received_frame)
-    {
-      ethernet_input(received_frame, &netif_data);
-      pbuf_free(received_frame);
-      received_frame = NULL;
-      tud_network_recv_renew();
+    struct pbuf* p = NULL;
+    int i = 0;
+    while (i <= 5) {
+        queue_try_remove(&tusb_rx_queue, &p);
+        if (p != NULL) {
+            ethernet_input(p, &netif_data);
+            pbuf_free(p);
+            tud_network_recv_renew();
+            i++;
+        } else {
+            break;
+        }
     }
-    
+
     //sys_check_timeouts();
 }
 
