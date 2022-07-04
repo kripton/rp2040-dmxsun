@@ -21,4 +21,4 @@
 	url = https://github.com/kripton/jsoncpp.git
 [submodule "lib/pico-enc28j60"]
 	path = lib/pico-enc28j60
-	url = https://github.com/krystiancha/pico-enc28j60.git
+	url = https://github.com/kripton/pico-enc28j60.git
