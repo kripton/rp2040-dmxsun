@@ -34,6 +34,9 @@ extern "C" {
 #include "udp_e1_31.h"
 #include "udp_edp.h"
 
+#include <FreeRTOS.h>
+#include <task.h>
+
 extern "C" {
 #include <bsp/board.h>          // On-board-LED
 #include <tusb.h>
@@ -72,7 +75,9 @@ critical_section_t bufferLock;
 
 uint8_t usbTraffic = 0;
 
-void led_blinking_task(void);
+void led_blinking_task(void*);
+void tud_task_freertos(void*);
+void serve_traffic_freertos(void*);
 
 void core1_tasks(void);
 
@@ -160,6 +165,24 @@ int main() {
     tud_task();
     webServer.cyclicTask();
 
+    //led_blinking_task(nullptr);
+
+    // Configure the tasks for FreeRTOS
+    xTaskCreate(tud_task_freertos, "tTinyUSB", 256, NULL, 1, NULL);
+    xTaskCreate(serve_traffic_freertos, "tWebServer", 256, NULL, 1, NULL);
+    //xTaskCreate(statusLeds.cyclicTask, "tStatusLEDs", 256, NULL, 1, NULL);
+    xTaskCreate(led_blinking_task, "tLEDBlinking", 256, NULL, 1, NULL);
+
+    vTaskStartScheduler();
+
+    while(1){
+        // Should never reach here, instead in out-of-memory conditions
+        BLINK_LED(BLINK_INIT);
+    };
+
+
+    // OLD APPROACH: Manual event + task loop
+    /*
     // Now get core1 running ...
     LOG("SYSTEM: Starting core 1 ...");
     multicore_launch_core1(core1_tasks);
@@ -185,6 +208,7 @@ int main() {
 //        led_blinking_task();
 //        sleep_us(10);
     }
+    */
 };
 
 // Core1 handles wireless (which can delay quite a bit) + status LEDs
@@ -194,15 +218,28 @@ void core1_tasks() {
 //        webServer.cyclicTask();
         wireless.cyclicTask();
         statusLeds.cyclicTask();
-        led_blinking_task();
+        led_blinking_task(nullptr);
 //        sleep_us(10);
     }
 };
 
+void tud_task_freertos(void*) {
+    while (true) {
+        tud_task();
+    }
+}
+
+void serve_traffic_freertos(void*) {
+    while (true) {
+        service_traffic();
+    }
+}
+
 //--------------------------------------------------------------------+
 // BLINKING TASK
 //--------------------------------------------------------------------+
-void led_blinking_task(void) {
+void led_blinking_task(void*) {
+    while (true) {
     // The following calculations take lots of time. However, this doesn't
     // matter since the DMX updating is done via IRQ handler
 
@@ -236,5 +273,6 @@ void led_blinking_task(void) {
     } else if (universes_none_zero > 1) {
         BLINK_LED(BLINK_READY_MULTI_UNI);
         statusLeds.setStatic(7, 0, 0, 1);
+    }
     }
 }
