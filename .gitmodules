@@ -19,3 +19,6 @@
 [submodule "lib/jsconcpp"]
 	path = lib/jsconcpp
 	url = https://github.com/kripton/jsoncpp.git
+[submodule "lib/FreeRTOS-Kernel"]
+	path = lib/FreeRTOS-Kernel
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel
