@@ -77,6 +77,7 @@ uint8_t usbTraffic = 0;
 
 void led_blinking_task(void*);
 void tud_task_freertos(void*);
+void statusleds_freertos(void*);
 void serve_traffic_freertos(void*);
 
 void core1_tasks(void);
@@ -165,12 +166,10 @@ int main() {
     tud_task();
     webServer.cyclicTask();
 
-    //led_blinking_task(nullptr);
-
     // Configure the tasks for FreeRTOS
     xTaskCreate(tud_task_freertos, "tTinyUSB", 256, NULL, 1, NULL);
     xTaskCreate(serve_traffic_freertos, "tWebServer", 256, NULL, 1, NULL);
-    //xTaskCreate(statusLeds.cyclicTask, "tStatusLEDs", 256, NULL, 1, NULL);
+    xTaskCreate(statusleds_freertos, "tStatusLEDs", 256, NULL, 1, NULL);
     xTaskCreate(led_blinking_task, "tLEDBlinking", 256, NULL, 1, NULL);
 
     vTaskStartScheduler();
@@ -226,12 +225,21 @@ void core1_tasks() {
 void tud_task_freertos(void*) {
     while (true) {
         tud_task();
+        taskYIELD();
+    }
+}
+
+void statusleds_freertos(void*) {
+    while (true) {
+        statusLeds.cyclicTask();
+        taskYIELD();
     }
 }
 
 void serve_traffic_freertos(void*) {
     while (true) {
         service_traffic();
+        taskYIELD();
     }
 }
 
@@ -274,5 +282,7 @@ void led_blinking_task(void*) {
         BLINK_LED(BLINK_READY_MULTI_UNI);
         statusLeds.setStatic(7, 0, 0, 1);
     }
+
+    taskYIELD();
     }
 }
