@@ -48,8 +48,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(FREERTOS_CFG_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/config")
 set(FREERTOS_SRC_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../lib/FreeRTOS-Kernel")
 
-# Add FreeRTOS as a library
-add_library(FreeRTOS STATIC
+# FreeRTOS source files
+# Usually, one would include its CMakeLists-file or add it as a library
+# here. But that's not trivial with the smp branch
+set(FREERTOS_SOURCES
     ${FREERTOS_SRC_DIRECTORY}/event_groups.c
     ${FREERTOS_SRC_DIRECTORY}/list.c
     ${FREERTOS_SRC_DIRECTORY}/queue.c
@@ -57,14 +59,13 @@ add_library(FreeRTOS STATIC
     ${FREERTOS_SRC_DIRECTORY}/tasks.c
     ${FREERTOS_SRC_DIRECTORY}/timers.c
     ${FREERTOS_SRC_DIRECTORY}/portable/MemMang/heap_3.c
-    ${FREERTOS_SRC_DIRECTORY}/portable/GCC/ARM_CM0/port.c
+    #${FREERTOS_SRC_DIRECTORY}/portable/GCC/ARM_CM0/port.c
+    ${FREERTOS_SRC_DIRECTORY}/portable/ThirdParty/GCC/RP2040/port.c
 )
-
-# Build FreeRTOS
-target_include_directories(FreeRTOS PUBLIC
+set (FREERTOS_INCLUDE_DIRS
     ${FREERTOS_CFG_DIRECTORY}/
     ${FREERTOS_SRC_DIRECTORY}/include
-    ${FREERTOS_SRC_DIRECTORY}/portable/GCC/ARM_CM0
+    ${FREERTOS_SRC_DIRECTORY}/portable/ThirdParty/GCC/RP2040/include
 )
 
 
@@ -72,6 +73,7 @@ target_include_directories(FreeRTOS PUBLIC
 ## Sorted alphabetically
 add_executable(${CMAKE_PROJECT_NAME}
     ${TINYUSB_LIBNETWORKING_SOURCES}
+    ${FREERTOS_SOURCES}
     boardconfig.cpp
     crc_X25.c
     dmxbuffer.cpp
@@ -140,6 +142,7 @@ include(${LWIP_DIR}/src/Filelists.cmake)
 ## Needed so tusb_config.h is found by the tinyUSB-library included in the pico-sdk
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${LWIP_INCLUDE_DIRS}
+    ${FREERTOS_INCLUDE_DIRS}
     ${PICO_TINYUSB_PATH}/lib/networking
     ${CMAKE_CURRENT_LIST_DIR}
 )
@@ -153,6 +156,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     hardware_irq
     hardware_pio
     hardware_spi
+    hardware_exception
     jsoncpp
     libb64
     lwipallapps
@@ -166,7 +170,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     snappy
     tinyusb_board
     tinyusb_device
-    FreeRTOS
 )
 
 ## Create map/bin/hex/uf2 file etc.

@@ -75,10 +75,10 @@ critical_section_t bufferLock;
 
 uint8_t usbTraffic = 0;
 
-void led_blinking_task(void*);
-void tud_task_freertos(void*);
-void statusleds_freertos(void*);
-void serve_traffic_freertos(void*);
+void led_blinking_task(void *pvParameters);
+void tud_task_freertos(void *pvParameters);
+void statusleds_freertos(void *pvParameters);
+void serve_traffic_freertos(void *pvParameters);
 
 void core1_tasks(void);
 
@@ -212,7 +212,7 @@ int main() {
 
 // Core1 handles wireless (which can delay quite a bit) + status LEDs
 void core1_tasks() {
-    while (true) {
+    for( ;; ) {
 //        tud_task();
 //        webServer.cyclicTask();
         wireless.cyclicTask();
@@ -222,22 +222,22 @@ void core1_tasks() {
     }
 };
 
-void tud_task_freertos(void*) {
-    while (true) {
+void tud_task_freertos(void *pvParameters) {
+    for( ;; ) {
         tud_task();
         taskYIELD();
     }
 }
 
-void statusleds_freertos(void*) {
-    while (true) {
+void statusleds_freertos(void *pvParameters) {
+    for( ;; ) {
         statusLeds.cyclicTask();
         taskYIELD();
     }
 }
 
-void serve_traffic_freertos(void*) {
-    while (true) {
+void serve_traffic_freertos(void *pvParameters) {
+    for( ;; ) {
         service_traffic();
         taskYIELD();
     }
@@ -246,8 +246,8 @@ void serve_traffic_freertos(void*) {
 //--------------------------------------------------------------------+
 // BLINKING TASK
 //--------------------------------------------------------------------+
-void led_blinking_task(void*) {
-    while (true) {
+void led_blinking_task(void *pvParameters) {
+    for( ;; ) {
     // The following calculations take lots of time. However, this doesn't
     // matter since the DMX updating is done via IRQ handler
 
