@@ -79,6 +79,7 @@ void led_blinking_task(void *pvParameters);
 void tud_task_freertos(void *pvParameters);
 void statusleds_freertos(void *pvParameters);
 void serve_traffic_freertos(void *pvParameters);
+void wireless_freertos(void *pvParameters);
 
 void core1_tasks(void);
 
@@ -167,10 +168,21 @@ int main() {
     webServer.cyclicTask();
 
     // Configure the tasks for FreeRTOS
-    xTaskCreate(tud_task_freertos, "tTinyUSB", 256, NULL, 1, NULL);
-    xTaskCreate(serve_traffic_freertos, "tWebServer", 256, NULL, 1, NULL);
-    xTaskCreate(statusleds_freertos, "tStatusLEDs", 256, NULL, 1, NULL);
-    xTaskCreate(led_blinking_task, "tLEDBlinking", 256, NULL, 1, NULL);
+    TaskHandle_t xHandle = NULL;
+    xTaskCreate(tud_task_freertos, "tTinyUSB", 2048, NULL, 1, &xHandle);
+    vTaskCoreAffinitySet(xHandle, 1);
+
+    xTaskCreate(serve_traffic_freertos, "tWebServer", 8192, NULL, 1, &xHandle);
+    vTaskCoreAffinitySet(xHandle, 1);
+
+    xTaskCreate(statusleds_freertos, "tStatusLEDs", 32, NULL, 3, &xHandle);
+    vTaskCoreAffinitySet(xHandle, 2);
+
+    xTaskCreate(led_blinking_task, "tLEDBlinking", 32, NULL, 3, &xHandle);
+    vTaskCoreAffinitySet(xHandle, 2);
+
+    xTaskCreate(wireless_freertos, "tWireless", 2048, NULL, 2, &xHandle);
+    vTaskCoreAffinitySet(xHandle, 2);
 
     vTaskStartScheduler();
 
@@ -224,6 +236,7 @@ void core1_tasks() {
 
 void tud_task_freertos(void *pvParameters) {
     for( ;; ) {
+        //printf("tud_task_freertos core: %d\n", get_core_num());
         tud_task();
         taskYIELD();
     }
@@ -231,6 +244,7 @@ void tud_task_freertos(void *pvParameters) {
 
 void statusleds_freertos(void *pvParameters) {
     for( ;; ) {
+        //printf("statusleds_freertos core: %d\n", get_core_num());
         statusLeds.cyclicTask();
         taskYIELD();
     }
@@ -238,7 +252,16 @@ void statusleds_freertos(void *pvParameters) {
 
 void serve_traffic_freertos(void *pvParameters) {
     for( ;; ) {
+        //printf("serve_traffic_freertos core: %d\n", get_core_num());
         service_traffic();
+        taskYIELD();
+    }
+}
+
+void wireless_freertos(void *pvParameters) {
+    for( ;; ) {
+        //printf("wireless_freertos core: %d\n", get_core_num());
+        wireless.cyclicTask();
         taskYIELD();
     }
 }
@@ -248,6 +271,7 @@ void serve_traffic_freertos(void *pvParameters) {
 //--------------------------------------------------------------------+
 void led_blinking_task(void *pvParameters) {
     for( ;; ) {
+        //printf("led_blinking_task core: %d\n", get_core_num());
     // The following calculations take lots of time. However, this doesn't
     // matter since the DMX updating is done via IRQ handler
 
