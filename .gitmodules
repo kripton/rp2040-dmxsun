@@ -25,3 +25,6 @@
 [submodule "lib/u8g2"]
 	path = lib/u8g2
 	url = https://github.com/olikraus/u8g2.git
+[submodule "lib/W5500MacRaw"]
+	path = lib/W5500MacRaw
+	url = https://github.com/kripton/W5500MacRaw.git
