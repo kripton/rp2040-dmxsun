@@ -30,6 +30,7 @@ extern "C" {
 #include "wireless.h"
 #include "localdmx.h"
 #include "eth_cyw43.h"
+#include "eth_w5500.h"
 #include "oled_u8g2.h"
 
 #include "dhcpdata.h"
@@ -76,8 +77,9 @@ Oled_u8g2 oled_u8g2;
 BoardConfig boardConfig;
 WebServer webServer;
 Wireless wireless;
-Eth_cyw43 eth_cyw43;
 DhcpData dhcpdata;
+Eth_cyw43 eth_cyw43;
+Eth_W5500 eth_w5500;
 
 critical_section_t bufferLock;
 
@@ -177,6 +179,11 @@ int main() {
     dhcpd_init();
 
     webServer.init();
+
+    // Initialize the Ethernet module
+    eth_w5500.init();
+
+    // TODO: Check init order and if W5500 and nRF24 cooperate!
 
     // Phase 7: Detect if there is a radio module and init it if so
     wireless.init();

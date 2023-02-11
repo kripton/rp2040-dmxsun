@@ -98,6 +98,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/src/dmxbuffer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/edp.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/eth_cyw43.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/eth_w5500.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/localdmx.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/log.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
@@ -115,6 +116,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/src/usb_NodleU1.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/webserver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/wireless.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/lib/W5500MacRaw/w5500.cpp
 )
 
 

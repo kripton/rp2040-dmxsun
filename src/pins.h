@@ -17,6 +17,10 @@
 #define PIN_SPI_CS0     5
 #define PIN_RF24_CE    28
 
+// SPI to the option W5500 SPI Ethernet module
+#define PIN_SPI_CS_W   26
+#define PIN_IRQ_W5500  27
+
 // IO board 00
 #define PIN_IO00_0      6
 #define PIN_IO00_1      7

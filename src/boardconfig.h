@@ -23,7 +23,7 @@
 #define MAX_PATCHINGS 32
 
 // Config data types and layout
-#define CONFIG_VERSION 7
+#define CONFIG_VERSION 8
 
 #ifdef __cplusplus
 
@@ -166,6 +166,11 @@ struct __attribute__((__packed__)) ConfigData {
     uint32_t               ownMask;
     uint32_t               hostIp;
 
+    EthDhcpMode            eth_dhcpMode;
+    uint32_t               eth_ownIp;
+    uint32_t               eth_mask;
+    uint32_t               eth_gw;
+
     bool                   wifi_STA_enabled;
     char                   wifi_STA_SSID[32];
     char                   wifi_STA_PSK[32];
@@ -208,6 +213,10 @@ static const ConfigData constDefaultConfig = {
     .ownIp               = 0x0100fea9UL, // 169.254.X.1
     .ownMask             = 0x00ffffffUL, // 255.255.255.0
     .hostIp              = 0x0200fea9UL, // 169.254.X.2
+    .eth_dhcpMode        = EthDhcpMode::dhcpOrFail,
+    .eth_ownIp           = 0,
+    .eth_mask            = 0,
+    .eth_gw              = 0,
     .wifi_STA_enabled    = false,
     .wifi_STA_DhcpMode   = EthDhcpMode::dhcpOrFail,
     .wifi_STA_ip         = 0,
