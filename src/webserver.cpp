@@ -14,6 +14,7 @@
 #include "dmxbuffer.h"
 #include "wireless.h"
 #include "dhcpdata.h"
+#include "eth_w5500.h"
 
 #define MAGIC_ENUM_RANGE_MAX 255
 #include "../lib/magic_enum/include/magic_enum.hpp"
@@ -22,6 +23,7 @@ extern StatusLeds statusLeds;
 extern BoardConfig boardConfig;
 extern DmxBuffer dmxBuffer;
 extern Wireless wireless;
+extern Eth_W5500 eth_w5500;
 
 extern char __StackLimit; /* Set by linker.  */
 
@@ -441,6 +443,10 @@ u16_t WebServer::ssi_handler(const char* ssi_tag_name, char *pcInsert, int iInse
 
             iface = iface->next;
         }
+
+        output["eth"]["exist"] = eth_w5500.responding;
+        output["eth"]["link"] = eth_w5500.phyLink;
+        output["eth"]["link100"] = eth_w5500.phyLink100;
 
         for (int i = 0; i < DHCP_NUM_ENTRIES_USB; i++) {
             output["net"]["u0"]["dhcp"][i] = DhcpData::dhcpEntryToString(&(dhcp_entries_usb[i]));

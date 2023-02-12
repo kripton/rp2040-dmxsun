@@ -162,6 +162,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} INTERFACE
 )
 target_include_directories(u8g2 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/u8g2/cppsrc)
 
+## Config for the W5500MacRaw library
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PUBLIC W5500_SPI=spi0
+)
+
 ## LWIP works a little bit different than the other libraries since
 ## it ships its own FileList
 set(LWIP_DIR ${CMAKE_CURRENT_LIST_DIR}/lib/lwip)

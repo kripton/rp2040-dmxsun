@@ -42,7 +42,7 @@ struct w5500_info
 };
 
 struct w5500_info w5500_info = {
-    .spi = spi1,
+    .spi = W5500_SPI,
     .cs_pin = PIN_SPI_CS_W,
     .lastCheck = 0,
 };
@@ -50,7 +50,7 @@ struct w5500_info w5500_info = {
 void gpio_callback_w5500(void) {
     if (gpio_get_irq_event_mask(PIN_IRQ_W5500) & GPIO_IRQ_EDGE_FALL) {
         gpio_acknowledge_irq(PIN_IRQ_W5500, GPIO_IRQ_EDGE_FALL);
-        //LOG("W5500 GPIO CALLBACK!");
+        //LOG("W5500 IRQ!");
         eth_w5500.irqPending = true;
     }
 }
@@ -71,12 +71,12 @@ void Eth_W5500::init()
     gpio_set_irq_enabled(PIN_IRQ_W5500, GPIO_IRQ_EDGE_FALL, true);
     irq_set_enabled(IO_IRQ_BANK0, true);
     gpio_add_raw_irq_handler(PIN_IRQ_W5500, gpio_callback_w5500);
-    // Use SPI1 at 20MHz (maximum clock rate the nRF24 on the same port supports)
-    spi_init(spi1, 20 * 1000 * 1000);
+    // Use W5500_SPI at 20MHz (maximum clock rate the nRF24 on the same port supports)
+    spi_init(W5500_SPI, 20 * 1000 * 1000);
     gpio_set_function(PIN_SPI_CLK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SPI_MOSI, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SPI_MISO, GPIO_FUNC_SPI);
-    spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    spi_set_format(W5500_SPI, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // Chip selects are active-low, so we initialise them to a driven-high state
     gpio_init(PIN_SPI_CS_W);
