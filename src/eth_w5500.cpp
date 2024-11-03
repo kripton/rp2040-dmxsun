@@ -217,7 +217,7 @@ void Eth_W5500::service_traffic(void)
     int i = 0;
     while (i <= 3)
     {
-        size = w5500->readFrame(ethRxBuf, 2000);
+        size = w5500->readFrame(ethRxBuf, 1800);
         if (size)
         {
             LOG("W5500: Read packet with size %d", size);
