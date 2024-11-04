@@ -186,7 +186,7 @@ int main() {
     // TODO: Check init order and if W5500 and nRF24 cooperate!
 
     // Phase 7: Detect if there is a radio module and init it if so
-    wireless.init();
+    //wireless.init();
 
     // Phase 8: Set up PIOs and GPIOs according to the IO boards
     localDmx.init();
@@ -256,7 +256,7 @@ void core1_tasks() {
     while (true) {
 //        tud_task();
 //        webServer.cyclicTask();
-        wireless.cyclicTask();
+        //wireless.cyclicTask();
         statusLeds.cyclicTask();
         led_blinking_task();
 //        sleep_us(10);

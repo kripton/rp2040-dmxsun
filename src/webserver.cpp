@@ -91,6 +91,7 @@ void WebServer::init() {
 
 void WebServer::cyclicTask() {
     service_traffic();
+    eth_w5500.service_traffic();
 }
 
 void WebServer::ipToString(uint32_t ip, char* ipString) {

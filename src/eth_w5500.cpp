@@ -64,6 +64,7 @@ void Eth_W5500::init()
     phyLinkPrevious = false;
     initDone = false;
     irqPending = false;
+    noMoreLinkCount = 0;
 
     //// Set up the IRQ line interrupt handlers
     gpio_init(PIN_IRQ_W5500);
@@ -72,7 +73,7 @@ void Eth_W5500::init()
     irq_set_enabled(IO_IRQ_BANK0, true);
     gpio_add_raw_irq_handler(PIN_IRQ_W5500, gpio_callback_w5500);
     // Use W5500_SPI at 20MHz (maximum clock rate the nRF24 on the same port supports)
-    spi_init(W5500_SPI, 20 * 1000 * 1000);
+    spi_init(W5500_SPI, 5 * 1000 * 1000);
     gpio_set_function(PIN_SPI_CLK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SPI_MOSI, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SPI_MISO, GPIO_FUNC_SPI);
@@ -143,11 +144,11 @@ void Eth_W5500::getStatus()
     phyLink100 = phyLink && w5500->phyLink100;
     phyLinkFD = phyLink && w5500->phyLinkFD;
 
-    if (phyLink && !phyLinkPrevious)
+    if (phyLink && !phyLinkPrevious && (noMoreLinkCount == 0))
     {
         // We just got a link. Re-init the W5500
         // so that the MAC_RAW socket is opened properly
-        LOG("Link UP detected, re-init the W5500!");
+        LOG("Link UP detected, re-init the W5500 XXX!");
         w5500->end();
         uint8_t wizOk = w5500->begin(mac);
         LOG("WIZOK: %d", wizOk);
@@ -168,13 +169,23 @@ void Eth_W5500::getStatus()
         }
     }
 
-    if (!phyLink && phyLinkPrevious)
+    // We need to de-bounce the "link got lost" scenario since sometimes
+    // reads of the status are erratic.
+    // TODO: Find and fix root cause!
+
+    if (!phyLink && (phyLinkPrevious || noMoreLinkCount))
     {
-        LOG("Link DOWN detected (link lost!)");
-        netif_set_down(&netif);
+        LOG("Link DOWN detected (INCREASE COUNTER TO %d)", noMoreLinkCount);
+        noMoreLinkCount++;
     }
 
-    phyLinkPrevious = phyLink;
+    if (!phyLink && (noMoreLinkCount > 10))
+    {
+        noMoreLinkCount = 0;
+        LOG("Link DOWN detected (LINK LOST!)");
+        netif_set_down(&netif);
+        phyLinkPrevious = phyLink;
+    }
 }
 
 void Eth_W5500::service_traffic(void)

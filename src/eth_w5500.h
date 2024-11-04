@@ -35,6 +35,7 @@ class Eth_W5500 {
     uint8_t mac[6];
     uint8_t ethRxBuf[1800];  // At least one full frame at MTU = 1500
     bool phyLinkPrevious;
+    uint8_t noMoreLinkCount;
     Wiznet5500 *w5500;
     bool initDone;
 };
